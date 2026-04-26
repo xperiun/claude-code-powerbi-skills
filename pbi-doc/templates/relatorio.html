@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE · /pbi-doc · relatorio.html
+  DS: Xperiun v4 (ver references/design-tokens.md desta skill)
+
+  Como usar:
+  1. Substituir TODOS os placeholders {{VAR}} por valores reais
+  2. CSS/JS já vêm inline — só preencher conteúdo
+  3. Salvar como _docs/index.html na raiz do projeto Power BI
+
+  Placeholders globais:
+    {{PROJECT_NAME}}        — Ex: 16 - EV16 - Dashboard Vendas
+    {{PROJECT_FILENAME}}    — Ex: 16 - EV16 - Dashboard Vendas.pbip
+    {{TIMESTAMP}}           — Ex: 26 abr 2026
+    {{PROJECT_TAGLINE}}     — 1 frase descrevendo o propósito do modelo (inferido)
+    {{PROJECT_HERO_SUB}}    — Ex: "Modelo de aula · EV16 Power BI Week · gerado em 26 abr 2026"
+    {{TABLES_COUNT}}, {{MEASURES_COUNT}}, {{RELATIONSHIPS_COUNT}}, {{COLUMNS_COUNT}}, {{SIZE}}
+
+  Placeholders de blocos HTML (gerados pelo Claude com base nos .tmdl):
+    {{NAV_TABLES_HTML}}       — sub-nav de tabelas (links com badges fato/dim/med/aux)
+    {{NAV_MEASURES_HTML}}     — sub-nav de pastas de medidas (links com counts)
+    {{INVENTORY_TABLE_ROWS}}  — linhas <tr> da tabela inventário
+    {{DATA_SOURCES_TEXT}}     — texto descritivo das fontes
+    {{WARNINGS_HTML}}         — callouts.warn pra problemas detectáveis (paths pessoais, etc) — pode ser vazio
+    {{CONFIG_LIST_HTML}}      — items <li> da config-list (culture, compatibility, autoDateTime, etc)
+    {{TABLES_CARDS_HTML}}     — todos os <article class="table-card"> da seção 01
+    {{MEASURE_GROUPS_HTML}}   — todos os <div class="measure-group"> da seção 02
+    {{REL_SVG_HTML}}          — SVG inline do diagrama de relacionamentos (gerar dinâmico)
+    {{REL_TABLE_ROWS}}        — linhas <tr> da tabela de relacionamentos
+    {{DEP_TREE_HTML}}         — árvore de dependências (uma ou mais)
+    {{DEP_REVERSE_HTML}}      — cards reverse das medidas-base
+    {{TOP_TABLES_LIST_HTML}}  — items <li> com tabelas mais referenciadas
+
+  Padrão dos componentes — ver also references/escopo.md desta skill.
+
+  Padrão de measure (todas são <details>; medidas-âncora têm classe .anchor + atributo open):
+    <details class="measure-mini [anchor]" [open]>
+      <summary>
+        <span class="name">{Nome}</span>
+        <span class="dax">{DAX-essência em 1 linha}</span>
+        <span class="toggle">+</span>
+      </summary>
+      <div class="mini-body">
+        <p class="meta">Tabela: <code>{tabela}</code> · Format: <code>{format}</code></p>
+        <p class="desc"><strong>O que faz:</strong> {explicação business}</p>
+        <pre class="code">{DAX completo com syntax highlight via spans .k .f .s .c}</pre>
+        <div class="label">Como funciona</div>
+        <p class="desc">{explicação técnica}</p>
+        <div class="label">É usada por</div>
+        <p class="measure-deps"><code>{outra-medida-1}</code> · <code>{outra-medida-2}</code></p>
+      </div>
+    </details>
+
+  Excluir tabelas auto-date (LocalDateTable_*, DateTableTemplate_*) — não fazem parte da doc intencional.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Doc · {{PROJECT_NAME}} · Xperiun</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-deepest:#0D0C0E; --bg-dark:#100F14; --bg-navy:#1A1346; --bg-indigo:#1D164A;
+  --bg-card:#14131A; --bg-elevated:#1C1B28; --bg-surface:#211F30;
+  --accent-deep:#1A1346; --accent-mid:#3951A3; --accent-blue:#4668D4;
+  --accent-bright:#5A7FFF; --accent-glow:#7099FF;
+  --accent-gold-deep:#B8955A; --accent-gold:#D4B896;
+  --accent-gold-bright:#E8C9A0; --accent-gold-glow:#F0DFC0;
+  --neon-cyan:#4FE3E8; --neon-magenta:#C47FFF; --neon-violet:#7B6FFF; --neon-teal:#3FD1B8;
+  --text-white:#FFFFFF; --text-primary:#F0EFF8; --text-secondary:#9DA5C8;
+  --text-muted:#6B729A; --text-faint:#3E4468;
+  --border-faint:rgba(255,255,255,0.06); --border-mid:rgba(255,255,255,0.12);
+  --border-accent:rgba(90,127,255,0.35); --border-gold:rgba(212,184,150,0.35);
+  --shadow-card:0 4px 24px rgba(0,0,0,0.4);
+  --shadow-elevated:0 8px 48px rgba(0,0,0,0.6);
+  --gradient-orb:radial-gradient(ellipse at 38% 52%, #1F2E75 0%, #16205A 12%, #0F143E 28%, #0A0C24 48%, #0D0C0E 70%);
+  --gradient-gold:linear-gradient(135deg, #F0DFC0 0%, #D4B896 55%, #B8955A 100%);
+  --gradient-surface:linear-gradient(135deg, #1C1B28 0%, #14131A 100%);
+  --font-display:'Bebas Neue', sans-serif;
+  --font-condensed:'Barlow Condensed', sans-serif;
+  --font-body:'Outfit', sans-serif;
+  --font-mono:'JetBrains Mono', 'Consolas', monospace;
+  --sidebar-w: 260px;
+  --topbar-h: 60px;
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg-deepest);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+body::before {
+  content:''; position:fixed; inset:0; background: var(--gradient-orb);
+  z-index:-1; pointer-events:none;
+}
+
+/* ── Topbar ── */
+.topbar {
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: var(--topbar-h);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-faint);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; z-index: 90;
+}
+.project-name { font-family: var(--font-body); font-size: 14px; color: var(--text-secondary); }
+.project-name strong { color: var(--text-white); font-weight: 600; }
+
+.search-wrap { position: relative; }
+.search-input {
+  width: 320px; padding: 9px 16px 9px 38px; font-family: var(--font-body); font-size: 13px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border-faint); border-radius: 999px;
+  color: var(--text-white); transition: all 0.2s;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus { outline: none; border-color: var(--border-accent); background: rgba(255,255,255,0.06); }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; pointer-events: none; }
+
+.menu-btn { display: none; background: transparent; border: 1px solid var(--border-mid); color: var(--text-white); font-family: var(--font-condensed); font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+/* ── Sidebar ── */
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--bg-elevated);
+  border-right: 1px solid var(--border-faint);
+  overflow-y: auto; padding: 0 0 24px;
+  z-index: 100;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  height: var(--topbar-h);
+  padding: 0 24px;
+  font-family: var(--font-condensed); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.18em; color: var(--accent-glow); text-transform: uppercase;
+  border-bottom: 1px solid var(--border-faint);
+  margin-bottom: 24px;
+}
+.sidebar-brand .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-glow); box-shadow: 0 0 8px var(--accent-glow);
+}
+.nav-section { margin-bottom: 28px; }
+.nav-section-title {
+  font-family: var(--font-condensed); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--text-muted); padding: 0 24px 8px;
+}
+.nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 24px; font-family: var(--font-body); font-size: 13px;
+  color: var(--text-secondary); text-decoration: none;
+  border-left: 2px solid transparent; transition: all 0.15s;
+}
+.nav-link:hover { background: rgba(255,255,255,0.03); color: var(--text-white); }
+.nav-link.active { background: rgba(112,153,255,0.08); color: var(--accent-glow); border-left-color: var(--accent-glow); }
+.nav-link .icon { font-family: var(--font-condensed); font-weight: 700; opacity: 0.6; font-size: 11px; min-width: 18px; }
+.nav-link .count { margin-left: auto; font-family: var(--font-condensed); font-size: 11px; color: var(--text-muted); padding: 2px 6px; background: rgba(255,255,255,0.04); border-radius: 4px; }
+
+.nav-sub {
+  padding-left: 36px; margin-top: 4px;
+}
+.nav-sub a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 16px 4px 0; font-family: var(--font-body); font-size: 12.5px;
+  color: var(--text-secondary); text-decoration: none; line-height: 1.5;
+}
+.nav-sub a:hover { color: var(--accent-glow); }
+.nav-sub .badge-mini {
+  font-family: var(--font-condensed); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; flex-shrink: 0;
+}
+.badge-mini.fato { background: rgba(196,127,255,0.15); color: var(--neon-magenta); }
+.badge-mini.dim { background: rgba(112,153,255,0.15); color: var(--accent-glow); }
+.badge-mini.med { background: rgba(232,201,160,0.15); color: var(--accent-gold-bright); }
+.badge-mini.aux { background: rgba(107,114,154,0.2); color: var(--text-muted); }
+
+/* ── Main ── */
+.main {
+  margin-left: var(--sidebar-w);
+  padding-top: var(--topbar-h);
+  min-height: 100vh;
+}
+.main-inner { max-width: 920px; margin: 0 auto; padding: 48px 48px 96px; }
+
+/* ── Sections ── */
+section {
+  scroll-margin-top: 76px;  /* offset pra anchor scroll passar do topbar fixo */
+}
+.section-divider {
+  border: none;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,201,160,0.5) 50%, transparent);
+  margin: 64px 0;
+}
+.section-eyebrow { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+.section-title { font-family: var(--font-display); font-size: clamp(28px, 3.5vw, 42px); line-height: 1.05; letter-spacing: 0.04em; color: var(--text-white); margin-bottom: 14px; text-transform: uppercase; }
+.section-title .gold { background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.section-desc { font-family: var(--font-body); font-size: 16px; color: var(--text-secondary); line-height: 1.7; max-width: 64ch; margin-bottom: 36px; }
+.section-desc strong { color: var(--text-white); font-weight: 600; }
+
+/* ── Hero ── */
+.hero-block { padding: 36px 0 0; }
+.hero-eyebrow { font-family: var(--font-condensed); font-size: 12px; font-weight: 300; letter-spacing: 0.5em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 18px; }
+.hero-title { font-family: var(--font-condensed); font-size: clamp(28px, 4vw, 44px); font-weight: 300; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-white); line-height: 1.05; margin-bottom: 8px; word-break: break-word; }
+.hero-sub { font-family: var(--font-condensed); font-size: clamp(14px, 1.6vw, 18px); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom: 28px; }
+.hero-tagline { font-family: var(--font-body); font-style: italic; font-size: 17px; color: var(--text-secondary); max-width: 60ch; line-height: 1.6; }
+
+/* ── Metric row ── */
+.metric-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 32px 0 48px; }
+@media(max-width:780px){ .metric-row { grid-template-columns: repeat(2, 1fr); } }
+.metric-card { padding: 20px 18px; background: var(--gradient-surface); border: 1px solid var(--border-faint); border-radius: 12px; }
+.metric-num { font-family: var(--font-condensed); font-weight: 300; font-size: 32px; line-height: 1; color: var(--accent-gold-bright); margin-bottom: 6px; }
+.metric-label { font-family: var(--font-condensed); font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ── Inventory table ── */
+.inv-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 14px; margin-bottom: 32px; }
+.inv-table thead th { padding: 12px 14px; text-align: left; font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-mid); }
+.inv-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border-faint); color: var(--text-primary); }
+.inv-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.inv-table tbody td.tab-name { font-family: var(--font-mono); font-size: 13px; color: var(--accent-glow); font-weight: 500; }
+.inv-table tbody td.right { text-align: right; font-family: var(--font-condensed); font-weight: 600; color: var(--accent-gold-bright); }
+
+.badge-inline {
+  display: inline-block; font-family: var(--font-condensed); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
+}
+.badge-inline.fato { background: rgba(196,127,255,0.12); border: 1px solid rgba(196,127,255,0.4); color: var(--neon-magenta); }
+.badge-inline.dim { background: rgba(112,153,255,0.12); border: 1px solid rgba(112,153,255,0.4); color: var(--accent-glow); }
+.badge-inline.med { background: rgba(232,201,160,0.12); border: 1px solid rgba(232,201,160,0.4); color: var(--accent-gold-bright); }
+.badge-inline.aux { background: rgba(107,114,154,0.15); border: 1px solid rgba(107,114,154,0.4); color: var(--text-muted); }
+
+/* ── Source / Config blocks ── */
+.callout { padding: 18px 22px; background: rgba(70,104,212,0.06); border: 1px solid var(--border-accent); border-radius: 10px; margin: 16px 0; font-family: var(--font-body); font-size: 14px; color: var(--text-primary); }
+.callout.warn { background: rgba(196,127,255,0.06); border-color: rgba(196,127,255,0.4); }
+.callout.warn::before { content: '⚠ '; color: var(--neon-magenta); font-weight: 700; }
+.callout strong { color: var(--text-white); }
+.callout code { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-gold-bright); padding: 2px 6px; background: rgba(0,0,0,0.3); border-radius: 4px; word-break: break-all; }
+
+.config-list { list-style: none; padding: 0; margin: 16px 0; }
+.config-list li { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--border-faint); font-family: var(--font-body); font-size: 14px; }
+.config-list li:last-child { border-bottom: none; }
+.config-list .key { font-family: var(--font-condensed); font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); min-width: 200px; }
+.config-list .val { color: var(--text-primary); }
+.config-list .val.on { color: var(--neon-magenta); font-weight: 600; }
+
+/* ── Table card ── */
+.table-card {
+  background: var(--gradient-surface); border: 1px solid var(--border-faint);
+  border-radius: 14px; box-shadow: var(--shadow-card);
+  margin-bottom: 24px; overflow: hidden;
+}
+.table-card-head {
+  padding: 20px 24px; border-bottom: 1px solid var(--border-faint);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.table-card-name { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--accent-glow); }
+.table-card-meta { font-family: var(--font-body); font-size: 13px; color: var(--text-muted); }
+.table-card-body { padding: 20px 24px; }
+.table-card-body p { margin-bottom: 14px; color: var(--text-primary); font-size: 14px; line-height: 1.65; }
+.table-card-body .label { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin: 18px 0 8px; }
+
+.col-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 13px; }
+.col-table thead th { padding: 8px 10px; text-align: left; font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-mid); }
+.col-table tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border-faint); color: var(--text-primary); vertical-align: top; }
+.col-table .col-name { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-glow); font-weight: 500; }
+.col-table .col-type { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+.col-table .col-papel { color: var(--text-secondary); font-size: 12.5px; }
+.col-table .col-notas { color: var(--text-muted); font-size: 12px; font-style: italic; }
+
+details.source-m { margin-top: 16px; }
+details.source-m summary { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); cursor: pointer; padding: 6px 0; }
+details.source-m summary:hover { color: var(--accent-glow); }
+details.source-m pre { margin-top: 8px; }
+
+pre.code {
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6;
+  padding: 16px 20px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-faint);
+  border-left: 3px solid var(--accent-glow); border-radius: 8px;
+  color: var(--text-primary); overflow-x: auto; white-space: pre;
+}
+pre.code .k { color: var(--neon-magenta); font-weight: 600; }
+pre.code .f { color: var(--accent-glow); }
+pre.code .s { color: var(--accent-gold-bright); }
+pre.code .c { color: var(--text-muted); font-style: italic; }
+
+/* ── Measure group ── */
+.measure-group { margin-bottom: 36px; }
+.measure-group-title {
+  font-family: var(--font-display); font-size: 22px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-white); margin-bottom: 6px;
+}
+.measure-group-meta { font-family: var(--font-body); font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+
+.measure-card {
+  background: var(--gradient-surface); border: 1px solid var(--border-faint);
+  border-radius: 12px; box-shadow: var(--shadow-card);
+  margin-bottom: 16px; padding: 20px 24px;
+}
+.measure-name { font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--accent-gold-bright); margin-bottom: 4px; }
+.measure-meta { font-family: var(--font-body); font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.measure-meta code { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); }
+.measure-card .desc { font-size: 14px; color: var(--text-primary); margin-bottom: 14px; }
+.measure-card .label { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin: 14px 0 6px; }
+.measure-deps { font-family: var(--font-body); font-size: 13px; color: var(--text-secondary); }
+.measure-deps code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-glow); padding: 1px 6px; background: rgba(112,153,255,0.08); border-radius: 4px; }
+
+/* Mini measure (expansível) */
+details.measure-mini {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-faint);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+details.measure-mini:hover { border-color: var(--border-mid); }
+details.measure-mini[open] { border-color: var(--border-accent); background: var(--gradient-surface); margin-bottom: 16px; }
+details.measure-mini summary {
+  display: grid; grid-template-columns: 1fr auto 24px; gap: 16px; align-items: center;
+  padding: 10px 16px; cursor: pointer; list-style: none;
+}
+details.measure-mini summary::-webkit-details-marker { display: none; }
+details.measure-mini summary::marker { content: ""; }
+details.measure-mini summary .name { font-family: var(--font-mono); font-size: 13px; color: var(--accent-gold-bright); font-weight: 500; }
+details.measure-mini summary .dax { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+details.measure-mini summary .toggle { font-family: var(--font-condensed); font-size: 22px; font-weight: 300; color: var(--text-muted); transition: transform 0.25s; line-height: 1; text-align: center; }
+details.measure-mini[open] summary .toggle { transform: rotate(45deg); color: var(--accent-glow); }
+details.measure-mini[open] summary .dax { color: var(--text-secondary); }
+
+details.measure-mini .mini-body {
+  padding: 14px 18px 18px;
+  border-top: 1px dashed var(--border-faint);
+}
+details.measure-mini .mini-body p.desc { font-size: 14px; color: var(--text-primary); line-height: 1.65; margin-bottom: 12px; }
+details.measure-mini .mini-body p.desc:last-child { margin-bottom: 0; }
+details.measure-mini .mini-body p.desc strong { color: var(--text-white); font-weight: 600; }
+details.measure-mini .mini-body p.meta { font-family: var(--font-body); font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+details.measure-mini .mini-body p.meta code { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); padding: 1px 6px; background: rgba(255,255,255,0.04); border-radius: 4px; }
+details.measure-mini[open].anchor { border-color: rgba(232,201,160,0.4); }
+details.measure-mini .mini-body .label { font-family: var(--font-condensed); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin: 12px 0 6px; }
+details.measure-mini .mini-body .measure-deps { font-family: var(--font-body); font-size: 13px; color: var(--text-secondary); }
+details.measure-mini .mini-body .measure-deps code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-glow); padding: 1px 5px; background: rgba(112,153,255,0.08); border-radius: 4px; margin: 0 2px; }
+details.measure-mini .mini-body pre.code { font-size: 12px; padding: 14px 18px; margin-top: 4px; }
+
+/* ── Relacionamentos · SVG ── */
+.rel-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 820px;
+  margin: 0 auto 28px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border-faint);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.rel-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 13px; }
+.rel-table thead th { padding: 10px 12px; text-align: left; font-family: var(--font-condensed); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-mid); }
+.rel-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-faint); }
+.rel-table .from, .rel-table .to { font-family: var(--font-mono); font-size: 12px; color: var(--accent-glow); }
+.rel-table .card { font-family: var(--font-condensed); font-weight: 600; color: var(--text-secondary); letter-spacing: 0.05em; }
+.rel-table .dir-bi { color: var(--neon-magenta); font-weight: 600; }
+.rel-table .dir-single { color: var(--text-secondary); }
+
+/* ── Dependências ── */
+.dep-tree {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.85;
+  padding: 24px 28px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-faint);
+  border-radius: 12px; color: var(--text-primary); overflow-x: auto; white-space: pre;
+  margin-bottom: 28px;
+}
+.dep-tree .root { color: var(--accent-gold-bright); font-weight: 600; }
+.dep-tree .branch { color: var(--accent-glow); }
+.dep-tree .leaf { color: var(--text-secondary); }
+.dep-tree .dim { color: var(--text-muted); font-style: italic; }
+
+.dep-reverse-card {
+  background: var(--gradient-surface); border: 1px solid var(--border-faint);
+  border-radius: 10px; padding: 18px 22px; margin-bottom: 14px;
+}
+.dep-reverse-card .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.dep-reverse-card .head .name { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--accent-gold-bright); }
+.dep-reverse-card .head .tag { font-family: var(--font-condensed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--border-faint); border-radius: 999px; }
+.dep-reverse-card .by { font-family: var(--font-body); font-size: 13px; color: var(--text-secondary); }
+.dep-reverse-card .by code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-glow); padding: 1px 5px; background: rgba(112,153,255,0.08); border-radius: 4px; margin: 0 2px; }
+.dep-reverse-card .impl { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-faint); font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--text-muted); }
+
+/* ── Footer ── */
+.footer { margin-top: 80px; padding-top: 36px; border-top: 1px solid var(--border-faint); text-align: center; }
+.footer-divider { width: 60px; height: 1px; background: var(--gradient-gold); margin: 0 auto 24px; opacity: 0.7; }
+.footer-text { font-family: var(--font-body); font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+.footer-text strong { color: var(--text-white); }
+.footer-text .gold { background: var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight: 600; }
+.footer-cta {
+  display: inline-flex; align-items: center; gap: 10px; padding: 12px 28px;
+  background: rgba(70,104,212,0.1); border: 1px solid var(--border-accent);
+  border-radius: 999px; font-family: var(--font-condensed); font-weight: 700;
+  font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent-glow); text-decoration: none; transition: all 0.3s;
+}
+.footer-cta:hover { background: rgba(70,104,212,0.2); border-color: var(--accent-glow); transform: translateY(-2px); }
+.footer-meta { font-family: var(--font-condensed); font-size: 10px; color: var(--text-muted); margin-top: 24px; letter-spacing: 0.25em; text-transform: uppercase; }
+
+/* ── Mobile ── */
+@media (max-width: 980px) {
+  .menu-btn { display: block; }
+  .topbar { left: 0; padding: 0 20px; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+  .sidebar.open { transform: translateX(0); box-shadow: 0 0 50px rgba(0,0,0,0.6); }
+  .main { margin-left: 0; }
+  .main-inner { padding: 32px 20px 64px; }
+  .search-input { width: 180px; }
+  .project-name { display: none; }
+}
+
+/* ── Print ── */
+@media print {
+  body { background: white; color: #1A1A1A; }
+  body::before { display: none; }
+  .topbar, .sidebar, .menu-btn, .footer-cta { display: none; }
+  .main { margin-left: 0; padding-top: 0; }
+  .main-inner { padding: 24px; max-width: none; }
+  .table-card, .measure-card, .dep-reverse-card { box-shadow: none; background: white !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  pre.code, .rel-matrix, .dep-tree { background: #f5f5f5 !important; color: #1A1A1A !important; }
+  .section-title, .measure-name, .table-card-name { color: #1A1A1A !important; -webkit-text-fill-color: #1A1A1A !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="project-name">{{PROJECT_FILENAME}}</div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input class="search-input" type="text" placeholder="Buscar tabela ou medida..." id="search">
+  </div>
+  <button class="menu-btn" id="menu-toggle">≡</button>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-brand">
+    <span class="dot"></span>
+    <span>XPERIUN · CLAUDE CODE</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Navegação</div>
+    <a href="#overview" class="nav-link active"><span class="icon">00</span>Overview</a>
+    <a href="#tabelas" class="nav-link"><span class="icon">01</span>Tabelas <span class="count">{{TABLES_COUNT}}</span></a>
+    <a href="#medidas" class="nav-link"><span class="icon">02</span>Medidas <span class="count">{{MEASURES_COUNT}}</span></a>
+    <a href="#relacionamentos" class="nav-link"><span class="icon">03</span>Relacionamentos <span class="count">{{RELATIONSHIPS_COUNT}}</span></a>
+    <a href="#dependencias" class="nav-link"><span class="icon">04</span>Dependências</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Tabelas</div>
+    <div class="nav-sub">
+      {{NAV_TABLES_HTML}}
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Medidas · Pastas</div>
+    <div class="nav-sub">
+      {{NAV_MEASURES_HTML}}
+    </div>
+  </div>
+
+</aside>
+
+<!-- Main -->
+<div class="main">
+<div class="main-inner">
+
+  <!-- Hero -->
+  <div class="hero-block">
+    <p class="hero-eyebrow">Documentação Power BI</p>
+    <h1 class="hero-title">{{PROJECT_NAME}}</h1>
+    <p class="hero-sub">{{PROJECT_HERO_SUB}}</p>
+    <p class="hero-tagline">{{PROJECT_TAGLINE}}</p>
+  </div>
+
+  <!-- Overview -->
+  <section id="overview">
+
+    <div class="metric-row">
+      <div class="metric-card"><div class="metric-num">{{TABLES_COUNT}}</div><div class="metric-label">Tabelas</div></div>
+      <div class="metric-card"><div class="metric-num">{{MEASURES_COUNT}}</div><div class="metric-label">Medidas</div></div>
+      <div class="metric-card"><div class="metric-num">{{RELATIONSHIPS_COUNT}}</div><div class="metric-label">Relacionamentos</div></div>
+      <div class="metric-card"><div class="metric-num">{{COLUMNS_COUNT}}</div><div class="metric-label">Colunas</div></div>
+      <div class="metric-card"><div class="metric-num">{{SIZE}}</div><div class="metric-label">Tamanho .pbip</div></div>
+    </div>
+
+    <p class="section-eyebrow">00 · Overview</p>
+    <h2 class="section-title">Inventário de <span class="gold">tabelas</span></h2>
+    <p class="section-desc">{{OVERVIEW_DESC}}</p>
+
+    <table class="inv-table">
+      <thead><tr><th>Tabela</th><th>Tipo</th><th>Colunas</th><th>Medidas</th><th>Source</th></tr></thead>
+      <tbody>
+        {{INVENTORY_TABLE_ROWS}}
+      </tbody>
+    </table>
+
+    <p class="section-desc" style="margin-top:32px;"><strong>Fonte de dados:</strong> {{DATA_SOURCES_TEXT}}</p>
+
+    {{WARNINGS_HTML}}
+
+    <p class="section-desc" style="margin-top:32px;"><strong>Configurações relevantes do modelo:</strong></p>
+
+    <ul class="config-list">
+      {{CONFIG_LIST_HTML}}
+    </ul>
+
+  </section>
+
+  <hr class="section-divider"/>
+
+  <!-- Tabelas -->
+  <section id="tabelas">
+    <p class="section-eyebrow">01 · Tabelas</p>
+    <h2 class="section-title">Catálogo de <span class="gold">tabelas</span></h2>
+    <p class="section-desc">Cada tabela com descrição, granularidade, colunas tipadas e source resumido.</p>
+
+    {{TABLES_CARDS_HTML}}
+
+  </section>
+
+  <hr class="section-divider"/>
+
+  <!-- Medidas -->
+  <section id="medidas">
+    <p class="section-eyebrow">02 · Medidas</p>
+    <h2 class="section-title">Catálogo de <span class="gold">medidas</span></h2>
+    <p class="section-desc">19 medidas agrupadas pelos 3 displayFolders do modelo. Detalhe das 4 medidas-âncora (Faturamento, Margem Bruta, % YoY, Medida Selecionada). Resto listado de forma compacta.</p>
+
+    {{MEASURE_GROUPS_HTML}}
+
+  </section>
+
+  <hr class="section-divider"/>
+
+  <!-- Relacionamentos -->
+  <section id="relacionamentos">
+    <p class="section-eyebrow">03 · Relacionamentos</p>
+    <h2 class="section-title">Mapa de <span class="gold">relacionamentos</span></h2>
+    <p class="section-desc">Star schema clássico — todas as dimensões relacionam diretamente com a fato fVendas. 4 relacionamentos ativos, 1 deles bi-direcional.</p>
+
+    {{REL_SVG_HTML}}
+
+    <p class="section-desc"><strong>Tabela detalhada:</strong></p>
+    <table class="rel-table">
+      <thead><tr><th>#</th><th>From</th><th>To</th><th>Card.</th><th>Direção</th><th>Ativo</th><th>Notas</th></tr></thead>
+      <tbody>
+        {{REL_TABLE_ROWS}}
+      </tbody>
+    </table>
+  </section>
+
+  <hr class="section-divider"/>
+
+  <!-- Dependências -->
+  <section id="dependencias">
+    <p class="section-eyebrow">04 · Dependências</p>
+    <h2 class="section-title">Grafo de <span class="gold">dependências</span></h2>
+    <p class="section-desc">Quem depende de quem entre as medidas. Útil pra entender o impacto de mudanças — alterar Faturamento mexe em 6 medidas a jusante.</p>
+
+    <p class="section-desc"><strong>Árvore de % Faturamento YoY (medida-raiz):</strong></p>
+    <div class="dep-tree">{{DEP_TREE_HTML}}</div>
+
+    <p class="section-desc"><strong>Reverse — quem depende das medidas-base:</strong></p>
+
+    {{DEP_REVERSE_HTML}}
+
+    <p class="section-desc" style="margin-top:32px;"><strong>Tabelas mais referenciadas:</strong></p>
+    <ol style="font-family:var(--font-body);font-size:14px;color:var(--text-primary);padding-left:24px;line-height:2;">
+      {{TOP_TABLES_LIST_HTML}}
+    </ol>
+
+  </section>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-divider"></div>
+    <p class="footer-text">Doc gerada em 4 minutos por <strong>Claude Code</strong> + <span class="gold">/pbi-doc</span>.</p>
+    <a href="https://pages.xperiun.com" class="footer-cta">Quero usar esse skill no meu Power BI →</a>
+    <p class="footer-meta">XPERIUN · O Sistema Operacional dos Incomparáveis · pages.xperiun.com</p>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function(){
+  // Sidebar mobile toggle
+  const menuBtn = document.getElementById('menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+  }
+
+  // Scroll spy
+  const navLinks = document.querySelectorAll('.sidebar .nav-link');
+  const sections = Array.from(navLinks).map(link => {
+    const id = link.getAttribute('href').slice(1);
+    return { id, link, el: document.getElementById(id) };
+  }).filter(s => s.el);
+
+  function updateActive() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.el.offsetTop <= scrollY) current = s;
+    }
+    navLinks.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+
+  // Search (filtra cards por nome)
+  const search = document.getElementById('search');
+  const tableCards = document.querySelectorAll('.table-card');
+  const measureCards = document.querySelectorAll('.measure-card, .measure-mini');
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    [...tableCards, ...measureCards].forEach(card => {
+      const text = card.textContent.toLowerCase();
+      card.style.display = (q === '' || text.includes(q)) ? '' : 'none';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

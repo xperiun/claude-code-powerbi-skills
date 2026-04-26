@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE · /pbi-modelo-review · relatorio.html
+  DS: Xperiun v4 (ver references/design-tokens.md desta skill)
+
+  Como usar:
+  1. Ao gerar o relatório, substituir TODOS os placeholders {{VAR}} por valores reais
+  2. CSS já vem inline (não precisa modificar) — só preencher conteúdo
+  3. Salvar como _review/index.html na raiz do projeto Power BI do usuário
+
+  Placeholders globais:
+    {{PROJECT_NAME}}        — Ex: Comercial_2026.pbix
+    {{TIMESTAMP}}            — Ex: 26 abr 2026 · 14:32
+    {{TABLES_COUNT}}         — Ex: 52
+    {{MEASURES_COUNT}}       — Ex: 187
+    {{RELATIONSHIPS_COUNT}}  — Ex: 64
+    {{SIZE}}                 — Ex: 1.4 GB
+    {{SCORE}}                — Ex: 67
+    {{SCORE_LABEL}}          — Ex: Precisa Atenção (uma das 3: Bom · Precisa Atenção · Crítico)
+    {{VERDICT_HTML}}         — Frase de veredicto. Pode usar <strong> e <em> conforme tom.
+    {{TOTAL_ISSUES}}         — Ex: 47
+    {{CRITICAL_COUNT}}       — Ex: 12
+    {{TIME_TO_FIX}}          — Ex: ~4h
+    {{SEV_CRITICAL_COUNT}}   — Ex: 12
+    {{SEV_MEDIUM_COUNT}}     — Ex: 23
+    {{SEV_LIGHT_COUNT}}      — Ex: 12
+
+  Placeholders que viram blocos HTML:
+    {{DIST_BAR_HTML}}        — divs da barra (uma por categoria com count > 0)
+    {{DIST_LEGEND_HTML}}     — items da legenda (uma por categoria com count > 0)
+    {{FILTERS_HTML}}         — botões filter-btn (Todos + Críticos + por categoria com mais issues)
+    {{ISSUES_HTML}}          — todos os <details> de issue (ver padrão abaixo)
+
+  Padrão de cada DIST_BAR cell:
+    <div class="d-{slug-categoria}" title="{Categoria}: {N}">{N}</div>
+    Onde {slug-categoria} ∈ performance | relacionamentos | modelagem | naming | dax | doc
+
+  Padrão de cada DIST_LEGEND item:
+    <div class="leg-item">
+      <span class="leg-dot" style="background:{gradient};"></span>
+      {Categoria}<span class="leg-num">{N}</span>
+    </div>
+
+  Padrão de cada FILTER btn (precisa de data-filter pro JS funcionar):
+    <button class="filter-btn active" data-filter="all">Todos<span class="count">{N}</span></button>
+    <button class="filter-btn" data-filter="critical">Críticos<span class="count">{N}</span></button>
+    <button class="filter-btn" data-filter="{Categoria}">{Categoria}<span class="count">{N}</span></button>
+
+    Valores válidos de data-filter:
+    - "all"       → mostra tudo
+    - "critical"  → só críticos
+    - "medium"    → só médios
+    - "light"     → só leves
+    - "{Categoria}" (texto exato do issue-badge.cat) → filtra por categoria
+
+  Padrão de cada ISSUE card:
+    <details class="issue-card {critical|medium|light}" {open se for o 1º crítico}>
+      <summary class="issue-header">
+        <span class="issue-badge {critical|medium|light}">{Crítico|Médio|Leve}</span>
+        <span class="issue-badge cat">{Categoria}</span>
+        <div class="issue-title-wrap">
+          <div class="issue-title">{Título do issue}</div>
+          <div class="issue-path">{path/do/arquivo.tmdl[:linha]}</div>
+        </div>
+        <span class="issue-toggle">+</span>
+      </summary>
+      <div class="issue-body">
+        <div class="section-mini">
+          <div class="label">Por que importa</div>
+          <p class="text">{Explicação adaptada ao contexto real.}</p>
+        </div>
+        <div class="section-mini">
+          <div class="label">Como corrigir</div>
+          <p class="text">{Passo prático.}</p>
+        </div>
+        <!-- snippet opcional -->
+        <div class="section-mini">
+          <div class="label">Snippet sugerido</div>
+          <pre><span class="c">// comentário</span>
+<span class="k">keyword</span> <span class="f">funcao</span>(<span class="s">"string"</span>)</pre>
+        </div>
+      </div>
+    </details>
+
+  Severidade escolhe a cor automática via classe: critical (magenta), medium (blue glow), light (gold).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Auditoria · {{PROJECT_NAME}} · Xperiun</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-deepest:#0D0C0E; --bg-dark:#100F14; --bg-navy:#1A1346; --bg-indigo:#1D164A;
+  --bg-card:#14131A; --bg-elevated:#1C1B28; --bg-surface:#211F30;
+  --accent-deep:#1A1346; --accent-mid:#3951A3; --accent-blue:#4668D4;
+  --accent-bright:#5A7FFF; --accent-glow:#7099FF;
+  --accent-gold-deep:#B8955A; --accent-gold:#D4B896;
+  --accent-gold-bright:#E8C9A0; --accent-gold-glow:#F0DFC0;
+  --neon-cyan:#4FE3E8; --neon-magenta:#C47FFF; --neon-violet:#7B6FFF; --neon-teal:#3FD1B8;
+  --text-white:#FFFFFF; --text-primary:#F0EFF8; --text-secondary:#9DA5C8;
+  --text-muted:#6B729A; --text-faint:#3E4468;
+  --border-faint:rgba(255,255,255,0.06); --border-mid:rgba(255,255,255,0.12);
+  --border-accent:rgba(90,127,255,0.35); --border-gold:rgba(212,184,150,0.35);
+  --shadow-card:0 4px 24px rgba(0,0,0,0.5);
+  --shadow-elevated:0 8px 48px rgba(0,0,0,0.7);
+  --shadow-glow-sm:0 0 20px rgba(90,127,255,0.3);
+  --shadow-glow-gold:0 0 24px rgba(232,201,160,0.25);
+  --gradient-orb:radial-gradient(ellipse at 38% 52%, #1F2E75 0%, #16205A 12%, #0F143E 28%, #0A0C24 48%, #0D0C0E 70%);
+  --gradient-text:linear-gradient(135deg, #FFFFFF 0%, #A0B8FF 60%, #5A7FFF 100%);
+  --gradient-gold:linear-gradient(135deg, #F0DFC0 0%, #D4B896 55%, #B8955A 100%);
+  --gradient-surface:linear-gradient(135deg, #1C1B28 0%, #14131A 100%);
+  --font-display:'Bebas Neue', sans-serif;
+  --font-condensed:'Barlow Condensed', sans-serif;
+  --font-body:'Outfit', sans-serif;
+  --font-mono:'JetBrains Mono', 'Consolas', monospace;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--bg-deepest);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: var(--gradient-orb);
+  z-index:0;
+  pointer-events:none;
+}
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: radial-gradient(ellipse 600px 600px at 32% 58%, rgba(70,104,212,0.05) 0%, transparent 60%);
+  z-index:0;
+  pointer-events:none;
+}
+
+.container { max-width:1200px; margin:0 auto; padding:48px 40px; position:relative; z-index:1; }
+
+.topbar { display:flex; justify-content:space-between; align-items:center; padding-bottom:24px; border-bottom:1px solid var(--border-faint); margin-bottom:64px; flex-wrap:wrap; gap:16px; }
+.topbar .brand { display:flex; align-items:center; gap:12px; font-family:var(--font-condensed); font-size:14px; font-weight:700; letter-spacing:0.2em; color:var(--accent-glow); text-transform:uppercase; }
+.topbar .brand .dot { width:6px; height:6px; border-radius:50%; background:var(--accent-glow); box-shadow:0 0 8px var(--accent-glow); }
+.topbar .meta { font-family:var(--font-body); font-size:12px; color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; }
+
+.hero { padding:32px 0 80px; }
+.hero-eyebrow { font-family:var(--font-condensed); font-size:13px; font-weight:300; letter-spacing:0.5em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:24px; }
+.hero-headline { font-family:var(--font-condensed); font-size:clamp(40px, 6vw, 72px); font-weight:300; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-white); line-height:1.05; margin-bottom:8px; word-break:break-word; }
+.hero-subline { font-family:var(--font-condensed); font-size:clamp(16px, 2vw, 22px); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:32px; line-height:1.15; }
+.hero-meta { display:inline-flex; align-items:center; gap:10px; padding:10px 20px; border:1px solid var(--border-accent); border-radius:999px; background:rgba(70,104,212,0.08); font-family:var(--font-body); font-size:12px; font-weight:500; letter-spacing:0.06em; color:var(--accent-glow); }
+.hero-meta::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent-glow); box-shadow:0 0 8px var(--accent-glow); }
+
+.scorecard { display:grid; grid-template-columns:auto 1fr; gap:64px; align-items:center; padding:64px; background:var(--gradient-surface); border:1px solid var(--border-faint); border-radius:20px; box-shadow:var(--shadow-elevated); position:relative; margin-top:48px; }
+.scorecard::before { content:''; position:absolute; top:0; left:48px; right:48px; height:1px; background:linear-gradient(90deg, transparent, var(--accent-gold), transparent); opacity:0.5; }
+@media(max-width:780px){ .scorecard { grid-template-columns:1fr; gap:32px; padding:32px; text-align:center; } }
+
+.score-circle { display:flex; flex-direction:column; align-items:center; }
+.score-num { font-family:var(--font-condensed); font-weight:300; font-size:clamp(7rem, 14vw, 12rem); line-height:0.85; letter-spacing:-0.02em; background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 30px rgba(232,201,160,0.25)); }
+.score-num .denom { font-size:0.28em; color:var(--text-muted); margin-left:8px; font-weight:400; -webkit-text-fill-color:var(--text-muted); background:none; vertical-align:super; }
+.score-label { margin-top:20px; padding:8px 24px; background:rgba(212,184,150,0.08); border:1px solid var(--border-gold); border-radius:999px; font-family:var(--font-condensed); font-size:13px; letter-spacing:0.22em; color:var(--accent-gold-bright); text-transform:uppercase; font-weight:600; }
+
+.score-summary .verdict { font-family:var(--font-body); font-size:clamp(18px, 1.8vw, 22px); line-height:1.55; color:var(--text-primary); margin-bottom:32px; font-weight:400; }
+.score-summary .verdict strong { color:var(--accent-gold-bright); font-weight:600; }
+.score-summary .verdict em { color:var(--accent-glow); font-style:normal; font-weight:500; }
+.score-meta { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+.score-meta .stat { padding:20px; background:rgba(0,0,0,0.25); border:1px solid var(--border-faint); border-radius:12px; }
+.score-meta .stat .stat-num { font-family:var(--font-condensed); font-weight:300; font-size:36px; line-height:1; color:var(--accent-glow); margin-bottom:6px; }
+.score-meta .stat .stat-label { font-family:var(--font-condensed); font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); }
+
+.section { margin-top:96px; }
+.section-label { font-family:var(--font-condensed); font-size:11px; font-weight:600; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-muted); margin-bottom:16px; }
+.section-title { font-family:var(--font-display); font-size:clamp(36px, 5vw, 56px); line-height:1; letter-spacing:0.04em; color:var(--text-white); margin-bottom:16px; text-transform:uppercase; }
+.section-title .gold { background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.section-title .glow { background:var(--gradient-text); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.section-desc { font-family:var(--font-body); font-size:16px; color:var(--text-secondary); line-height:1.7; max-width:56ch; margin-bottom:40px; }
+
+.severity-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+@media(max-width:780px){ .severity-grid { grid-template-columns:1fr; } }
+
+.sev-card { padding:32px; background:var(--gradient-surface); border:1px solid var(--border-faint); border-radius:16px; box-shadow:var(--shadow-card); position:relative; transition:transform 0.3s ease, box-shadow 0.3s ease; cursor:pointer; }
+.sev-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-elevated); }
+.sev-card.critical { border-color:rgba(196,127,255,0.25); }
+.sev-card.critical::before { content:''; position:absolute; top:0; left:24px; right:24px; height:1px; background:linear-gradient(90deg, transparent, var(--neon-magenta), transparent); opacity:0.6; }
+.sev-card.medium { border-color:rgba(112,153,255,0.25); }
+.sev-card.medium::before { content:''; position:absolute; top:0; left:24px; right:24px; height:1px; background:linear-gradient(90deg, transparent, var(--accent-glow), transparent); opacity:0.6; }
+.sev-card.light { border-color:rgba(212,184,150,0.25); }
+.sev-card.light::before { content:''; position:absolute; top:0; left:24px; right:24px; height:1px; background:linear-gradient(90deg, transparent, var(--accent-gold), transparent); opacity:0.6; }
+
+.sev-card .sev-icon { font-family:var(--font-condensed); font-size:11px; letter-spacing:0.3em; font-weight:700; text-transform:uppercase; margin-bottom:16px; }
+.sev-card.critical .sev-icon { color:var(--neon-magenta); }
+.sev-card.medium .sev-icon { color:var(--accent-glow); }
+.sev-card.light .sev-icon { color:var(--accent-gold-bright); }
+
+.sev-card .sev-num { font-family:var(--font-condensed); font-weight:300; font-size:72px; line-height:0.9; margin-bottom:12px; }
+.sev-card.critical .sev-num { color:var(--neon-magenta); filter:drop-shadow(0 0 20px rgba(196,127,255,0.3)); }
+.sev-card.medium .sev-num { color:var(--accent-glow); filter:drop-shadow(0 0 20px rgba(112,153,255,0.3)); }
+.sev-card.light .sev-num { background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 20px rgba(232,201,160,0.25)); }
+
+.sev-card .sev-label { font-family:var(--font-condensed); font-size:14px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-white); margin-bottom:8px; }
+.sev-card .sev-desc { font-family:var(--font-body); font-size:14px; color:var(--text-secondary); line-height:1.6; }
+
+.dist-bar-container { padding:40px; background:var(--gradient-surface); border:1px solid var(--border-faint); border-radius:16px; box-shadow:var(--shadow-card); }
+.dist-bar { display:flex; height:56px; border-radius:8px; overflow:hidden; margin-bottom:32px; }
+.dist-bar > div { display:flex; align-items:center; justify-content:center; font-family:var(--font-condensed); font-size:15px; font-weight:700; color:var(--bg-deepest); transition:filter 0.25s; cursor:pointer; }
+.dist-bar > div:hover { filter:brightness(1.15); }
+.dist-bar .d-performance { background:linear-gradient(135deg, #5A7FFF, #4668D4); color:var(--text-white); }
+.dist-bar .d-relacionamentos { background:linear-gradient(135deg, #7B6FFF, #4668D4); color:var(--text-white); }
+.dist-bar .d-modelagem { background:linear-gradient(135deg, #C47FFF, #7B6FFF); color:var(--text-white); }
+.dist-bar .d-naming { background:linear-gradient(135deg, #E8C9A0, #B8955A); color:var(--bg-deepest); }
+.dist-bar .d-dax { background:linear-gradient(135deg, #4FE3E8, #3FD1B8); color:var(--bg-deepest); }
+.dist-bar .d-doc { background:linear-gradient(135deg, #6B729A, #3E4468); color:var(--text-white); }
+
+.dist-legend { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:16px; }
+.dist-legend .leg-item { display:flex; align-items:center; gap:12px; font-family:var(--font-body); font-size:14px; color:var(--text-secondary); }
+.dist-legend .leg-dot { width:14px; height:14px; border-radius:4px; flex-shrink:0; }
+.dist-legend .leg-num { color:var(--accent-glow); font-weight:600; margin-left:auto; font-family:var(--font-condensed); font-size:18px; }
+
+.filters { display:flex; gap:8px; margin-bottom:32px; flex-wrap:wrap; }
+.filter-btn { padding:10px 20px; background:rgba(255,255,255,0.03); border:1px solid var(--border-faint); border-radius:999px; font-family:var(--font-condensed); font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; transition:all 0.25s; }
+.filter-btn:hover { border-color:var(--border-accent); color:var(--accent-glow); }
+.filter-btn.active { background:rgba(112,153,255,0.1); border-color:var(--accent-glow); color:var(--accent-glow); }
+.filter-btn .count { color:var(--accent-gold-bright); font-weight:700; margin-left:8px; }
+
+.issues-list { display:flex; flex-direction:column; gap:20px; }
+
+.issue-card { padding:0; background:var(--gradient-surface); border:1px solid var(--border-faint); border-radius:14px; overflow:hidden; transition:border-color 0.25s, box-shadow 0.25s; box-shadow:var(--shadow-card); }
+.issue-card:hover { border-color:var(--border-mid); box-shadow:var(--shadow-elevated); }
+.issue-card.critical { border-color:rgba(196,127,255,0.2); }
+.issue-card.critical:hover { border-color:rgba(196,127,255,0.4); }
+.issue-card.medium { border-color:rgba(112,153,255,0.2); }
+.issue-card.medium:hover { border-color:rgba(112,153,255,0.4); }
+.issue-card.light { border-color:rgba(212,184,150,0.2); }
+.issue-card.light:hover { border-color:rgba(212,184,150,0.4); }
+
+.issue-header { padding:24px 28px; cursor:pointer; display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+.issue-badge { padding:5px 14px; border-radius:999px; font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; flex-shrink:0; margin-top:2px; }
+.issue-badge.critical { background:rgba(196,127,255,0.12); border:1px solid rgba(196,127,255,0.4); color:var(--neon-magenta); }
+.issue-badge.medium { background:rgba(112,153,255,0.12); border:1px solid rgba(112,153,255,0.4); color:var(--accent-glow); }
+.issue-badge.light { background:rgba(212,184,150,0.12); border:1px solid rgba(212,184,150,0.4); color:var(--accent-gold-bright); }
+.issue-badge.cat { background:rgba(255,255,255,0.04); border:1px solid var(--border-faint); color:var(--text-secondary); margin-left:8px; }
+
+.issue-title-wrap { flex:1; min-width:200px; }
+.issue-title { font-family:var(--font-body); font-size:18px; font-weight:600; color:var(--text-white); line-height:1.4; margin-bottom:6px; }
+.issue-path { font-family:var(--font-mono); font-size:12px; color:var(--accent-glow); opacity:0.8; word-break:break-all; }
+.issue-toggle { font-family:var(--font-condensed); font-size:28px; font-weight:300; color:var(--text-secondary); transition:transform 0.3s; flex-shrink:0; line-height:1; }
+.issue-card[open] .issue-toggle { transform:rotate(45deg); color:var(--accent-glow); }
+
+.issue-body { padding:0 28px 28px 28px; border-top:1px solid var(--border-faint); margin-top:0; padding-top:24px; }
+.issue-body .section-mini { margin-bottom:20px; }
+.issue-body .section-mini:last-child { margin-bottom:0; }
+.issue-body .label { font-family:var(--font-condensed); font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
+.issue-body .text { font-family:var(--font-body); font-size:15px; color:var(--text-primary); line-height:1.7; }
+.issue-body .text em { color:var(--accent-gold-bright); font-style:normal; font-weight:500; }
+.issue-body .text strong { color:var(--accent-glow); font-weight:600; }
+.issue-body pre { font-family:var(--font-mono); font-size:13px; line-height:1.6; padding:20px 24px; background:rgba(0,0,0,0.45); border:1px solid var(--border-faint); border-left:3px solid var(--accent-glow); border-radius:8px; color:var(--text-primary); overflow-x:auto; margin-top:12px; white-space:pre; }
+.issue-body pre .k { color:var(--neon-magenta); font-weight:600; }
+.issue-body pre .f { color:var(--accent-glow); }
+.issue-body pre .s { color:var(--accent-gold-bright); }
+.issue-body pre .c { color:var(--text-muted); font-style:italic; }
+
+.footer { margin-top:96px; padding-top:48px; border-top:1px solid var(--border-faint); text-align:center; }
+.footer-divider { width:80px; height:1px; background:var(--gradient-gold); margin:0 auto 32px; opacity:0.7; }
+.footer-text { font-family:var(--font-body); font-size:17px; color:var(--text-secondary); margin-bottom:24px; line-height:1.6; }
+.footer-text strong { color:var(--text-white); font-weight:600; }
+.footer-text .gold { background:var(--gradient-gold); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight:600; }
+.footer-cta { display:inline-flex; align-items:center; gap:12px; padding:14px 32px; background:rgba(70,104,212,0.1); border:1px solid var(--border-accent); border-radius:999px; font-family:var(--font-condensed); font-weight:700; font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent-glow); text-decoration:none; transition:all 0.3s; }
+.footer-cta:hover { background:rgba(70,104,212,0.2); border-color:var(--accent-glow); transform:translateY(-2px); box-shadow:var(--shadow-glow-sm); }
+.footer-meta { font-family:var(--font-condensed); font-size:11px; color:var(--text-muted); margin-top:32px; letter-spacing:0.25em; text-transform:uppercase; }
+
+@media print {
+  body { background:white; color:#1A1A1A; }
+  body::before, body::after { display:none; }
+  .scorecard, .sev-card, .issue-card, .dist-bar-container { box-shadow:none; background:white !important; border:1px solid #ddd !important; }
+  .score-num, .sev-num { color:#1A1A1A !important; -webkit-text-fill-color:#1A1A1A !important; filter:none !important; }
+  .section-title, .issue-title { color:#1A1A1A !important; }
+  .filters { display:none; }
+  .issue-card { break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>XPERIUN · CLAUDE CODE</span>
+    </div>
+    <div class="meta">/pbi-modelo-review · {{TIMESTAMP}}</div>
+  </div>
+
+  <div class="hero">
+    <p class="hero-eyebrow">Auditoria de modelo Power BI</p>
+    <h1 class="hero-headline">{{PROJECT_NAME}}</h1>
+    <p class="hero-subline">{{TABLES_COUNT}} tabelas · {{MEASURES_COUNT}} medidas · {{RELATIONSHIPS_COUNT}} relacionamentos · {{SIZE}}</p>
+    <div class="hero-meta">Gerado por Claude Code em {{GENERATION_TIME}}</div>
+
+    <div class="scorecard">
+      <div class="score-circle">
+        <div class="score-num">{{SCORE}}<span class="denom">/100</span></div>
+        <div class="score-label">{{SCORE_LABEL}}</div>
+      </div>
+      <div class="score-summary">
+        <p class="verdict">{{VERDICT_HTML}}</p>
+        <div class="score-meta">
+          <div class="stat">
+            <div class="stat-num">{{TOTAL_ISSUES}}</div>
+            <div class="stat-label">Issues totais</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">{{CRITICAL_COUNT}}</div>
+            <div class="stat-label">Críticos</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">{{TIME_TO_FIX}}</div>
+            <div class="stat-label">Tempo correção</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">01 · Severidade</p>
+    <h2 class="section-title">Issues por <span class="glow">prioridade</span></h2>
+    <p class="section-desc">Cada categoria tem peso diferente no score. Crítico bloqueia produção; médio cobra juros; leve é polimento.</p>
+
+    <div class="severity-grid">
+      <div class="sev-card critical">
+        <div class="sev-icon">▲ Crítico</div>
+        <div class="sev-num">{{SEV_CRITICAL_COUNT}}</div>
+        <div class="sev-label">Resolva primeiro</div>
+        <div class="sev-desc">Quebram refresh em produção, comprometem performance ou geram resultado errado.</div>
+      </div>
+      <div class="sev-card medium">
+        <div class="sev-icon">● Médio</div>
+        <div class="sev-num">{{SEV_MEDIUM_COUNT}}</div>
+        <div class="sev-label">Próxima sprint</div>
+        <div class="sev-desc">Anti-patterns que pioram conforme modelo cresce. Não urgente, mas vai cobrar juros.</div>
+      </div>
+      <div class="sev-card light">
+        <div class="sev-icon">○ Leve</div>
+        <div class="sev-num">{{SEV_LIGHT_COUNT}}</div>
+        <div class="sev-label">Quando der tempo</div>
+        <div class="sev-desc">Boas práticas, padronização, naming. Vale rodar quando estabilizar o crítico.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">02 · Distribuição</p>
+    <h2 class="section-title">Onde o modelo mais <span class="gold">sangra</span></h2>
+    <p class="section-desc">Categoria com mais issues = onde investir o esforço de refatoração tem maior ROI.</p>
+
+    <div class="dist-bar-container">
+      <div class="dist-bar" style="display:flex;">
+        {{DIST_BAR_HTML}}
+      </div>
+
+      <div class="dist-legend">
+        {{DIST_LEGEND_HTML}}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">03 · Issues priorizados</p>
+    <h2 class="section-title">Top issues, em <span class="gold">ordem de impacto</span></h2>
+    <p class="section-desc">Expande pra ver explicação técnica e correção sugerida com snippet TMDL/DAX pronto pra colar.</p>
+
+    <div class="filters">
+      {{FILTERS_HTML}}
+    </div>
+
+    <div class="issues-list">
+      {{ISSUES_HTML}}
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-divider"></div>
+    <p class="footer-text">Esse relatório foi gerado em {{GENERATION_TIME}} por <strong>Claude Code</strong> + <span class="gold">/pbi-modelo-review</span>.</p>
+    <a href="https://pages.xperiun.com" class="footer-cta">Quero usar esse skill no meu Power BI →</a>
+    <p class="footer-meta">XPERIUN · O Sistema Operacional dos Incomparáveis · pages.xperiun.com</p>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const btns = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('.issue-card');
+
+  function applyFilter(filter){
+    const f = (filter || 'all').toLowerCase();
+    cards.forEach(card => {
+      let show = false;
+      if (f === 'all') {
+        show = true;
+      } else if (f === 'critical' || f === 'medium' || f === 'light') {
+        show = card.classList.contains(f);
+      } else {
+        const cat = card.querySelector('.issue-badge.cat');
+        show = cat && cat.textContent.trim().toLowerCase() === f;
+      }
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilter(btn.dataset.filter);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
