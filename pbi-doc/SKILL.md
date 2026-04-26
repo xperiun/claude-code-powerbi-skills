@@ -121,7 +121,7 @@ Ler templates em `templates/` e preencher com dados reais. Salvar em `./_docs/` 
 
 1. **LER** `templates/relatorio.html` — esse arquivo já tem **todo o CSS, todo o HTML estrutural, todos os tokens DS v4 (Bebas Neue, accent-gold, gold-grid + beams animados, orb-v2 elipses blue/purple, riscas section+section::before, brackets), todo o JS de scroll spy/busca**. CSS são ~600 linhas inline + HTML completo com gold-grid, sidebar, topbar, sections.
 
-2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos valores reais derivados dos `.tmdl`. Os placeholders estão listados no comentário do topo do template. Todos os blocos `{{...}}_HTML` são gerados pelo Claude com base no inventário do modelo.
+2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos valores reais derivados dos `.tmdl`. Lista completa dos placeholders está em `references/escopo.md` desta skill (seção "Placeholders do `templates/relatorio.html`"). Todos os blocos `{{...}}_HTML` são gerados pelo Claude com base no inventário do modelo.
 
 3. **PROIBIDO:**
    - ❌ Trocar o CSS por outro
@@ -129,12 +129,23 @@ Ler templates em `templates/` e preencher com dados reais. Salvar em `./_docs/` 
    - ❌ Mudar fontes (DS v4 usa Bebas Neue + Barlow Condensed + Outfit + JetBrains Mono — nada de Segoe UI, Arial, system-ui)
    - ❌ Remover o `<div class="gold-grid">`, os `<div class="section-orb">`, ou qualquer ornamento decorativo do template
    - ❌ Gerar HTML "do zero" porque parece mais fácil — **isso queima toda a identidade visual Xperiun**
+   - ❌ **Tocar em qualquer coisa dentro de comentários `<!-- ... -->`** — comentários são instruções pra você, não conteúdo a substituir. Mantém como tá.
+   - ❌ **Tocar em `<style>...</style>` ou `<script>...</script>`** — CSS e JS ficam intocados.
 
-4. **SALVAR** em `./_docs/index.html` (modo Code) ou retornar como artifact (modo Web).
+4. **🚨 ENCODING — UTF-8 PURO, sem escape.** Caracteres PT-BR (`ã`, `ç`, `é`, `á`, `õ`, `ê`, `í`, `ú`) e símbolos especiais (`├`, `└`, `─`, `→`, `↔`, `↑`, `↓`, `⚠`, `·`, `—`) devem aparecer como **caracteres reais UTF-8**, NÃO como sequências escapadas/HTML entities/mojibake.
+   - ✅ Correto: `dependências`, `└─`, `→`, `Incomparáveis`
+   - ❌ Errado (mojibake): `dependÃªncias`, `âââ`, `â`, `IncomparÃ¡veis`
+   - ❌ Errado (entities desnecessárias): `depend&ecirc;ncias`
+   - **Sintoma de erro:** se algum acento aparece como sequência de 2-3 chars estranhos (`Ã£`, `â`, `Ã©`), o parser HTML pode quebrar e o resto da página renderiza como texto cru. Refaz garantindo UTF-8.
 
-5. **Como deve parecer:** fundo `#0D0C0E` quase preto · gold-grid de papel pautado dourado animado caindo · orbs azul/roxo em cada seção · risca dourada entre seções · cards `var(--gradient-surface)` com border `--border-faint` · números em Bebas Neue gold · DAX com syntax highlight via spans `.k .f .s .c`. Estilo "editorial premium dark" — não dashboard genérico tipo Vercel/Stripe.
+5. **SALVAR** em `./_docs/index.html` (modo Code) ou retornar como artifact (modo Web).
 
-6. **Sintoma de erro:** se o output tem cores como `#f5a623` (laranja) ou `#7c6af7` (roxo genérico), ou usa `'Segoe UI'`, ou não tem gold-grid no body — você IGNOROU o template. Volta e refaz usando o template literal.
+6. **Como deve parecer:** fundo `#0D0C0E` quase preto · gold-grid de papel pautado dourado animado caindo · orbs azul/roxo em cada seção · risca dourada entre seções · cards `var(--gradient-surface)` com border `--border-faint` · números em Bebas Neue gold · DAX com syntax highlight via spans `.k .f .s .c`. Estilo "editorial premium dark" — não dashboard genérico tipo Vercel/Stripe.
+
+7. **Sintomas de erro:**
+   - Cores como `#f5a623` (laranja) ou `#7c6af7` (roxo genérico), ou fonte `'Segoe UI'` → ignorou o template, refaz.
+   - Acentos como `Ã£` ou `â` → encoding quebrado, refaz com UTF-8 puro.
+   - Texto solto sem quebras (SVG/tabela aparecendo como prosa) → encoding mojibake quebrou o parser HTML, refaz.
 
 ### 4. Resumir no chat
 

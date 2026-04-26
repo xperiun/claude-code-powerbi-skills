@@ -139,16 +139,27 @@ Filtrar issues conforme severidade mínima escolhida e gerar **dois arquivos**:
 **🚨 REGRA INVIOLÁVEL — usar templates/relatorio.html LITERAL:**
 
 1. **LER** `templates/relatorio.html` — esse arquivo já tem **todo o CSS, todo o HTML estrutural, todos os tokens DS v4 (Bebas Neue, accent-gold, gold-grid + beams animados, orb-v2 elipses blue/purple, brackets), todo o JS de filtro de severidade**.
-2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos dados de auditoria reais.
+2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos dados de auditoria reais. Lista completa em `references/checks.md` desta skill (seção "Placeholders do `templates/relatorio.html`").
 3. **PROIBIDO:**
    - ❌ Trocar o CSS por outro
    - ❌ Inventar nova paleta (usar SÓ tokens do template: `--accent-gold-bright #E8C9A0`, `--accent-glow #7099FF`, `--neon-magenta #C47FFF`)
    - ❌ Mudar fontes (DS v4 = Bebas Neue + Barlow Condensed + Outfit + JetBrains Mono — nada de Segoe UI)
    - ❌ Remover `<div class="gold-grid">`, `<div class="section-orb">`, ou ornamentos do template
    - ❌ Gerar HTML "do zero" porque parece mais fácil — **isso queima toda a identidade visual Xperiun**
-4. **Garantir que CSS continua inline** (sem dependências externas além das fontes Google).
-5. **SALVAR** em `./_review/index.html` (modo Code) ou retornar como artifact (modo Web).
-6. **Sintoma de erro:** se output tem `#f5a623` (laranja) ou `#7c6af7` (roxo genérico), ou usa `'Segoe UI'`, ou não tem gold-grid no body — você IGNOROU o template. Volta e refaz usando o template literal.
+   - ❌ **Tocar em qualquer coisa dentro de comentários `<!-- ... -->`** — comentários são instruções pra você, não conteúdo a substituir.
+   - ❌ **Tocar em `<style>...</style>` ou `<script>...</script>`** — CSS e JS ficam intocados.
+
+4. **🚨 ENCODING — UTF-8 PURO, sem escape.** Caracteres PT-BR (`ã`, `ç`, `é`, `á`, `õ`, `ê`, `í`, `ú`) e símbolos especiais (`├`, `└`, `─`, `→`, `↔`, `↑`, `↓`, `⚠`, `·`, `—`) devem aparecer como **caracteres reais UTF-8**, NÃO como sequências escapadas/HTML entities/mojibake.
+   - ✅ Correto: `críticos`, `→`, `Atenção`, `⚠`
+   - ❌ Errado (mojibake): `crÃ­ticos`, `â`, `AtenÃ§Ã£o`
+   - **Sintoma:** se algum acento aparece como sequência de 2-3 chars estranhos, parser HTML pode quebrar e o resto da página renderiza como texto cru. Refaz com UTF-8.
+
+5. **Garantir que CSS continua inline** (sem dependências externas além das fontes Google).
+6. **SALVAR** em `./_review/index.html` (modo Code) ou retornar como artifact (modo Web).
+7. **Sintomas de erro:**
+   - Cores `#f5a623` (laranja) ou `#7c6af7` (roxo), ou fonte `'Segoe UI'` → ignorou template, refaz.
+   - Acentos como `Ã£` ou `â` → encoding quebrado, refaz UTF-8.
+   - Texto solto sem quebras (SVG/tabela como prosa) → mojibake quebrou parser, refaz.
 
 ### 6. Resumir no chat
 

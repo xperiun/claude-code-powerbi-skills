@@ -208,3 +208,66 @@ Top 5 tabelas mais usadas em medidas (sinaliza onde mora a "carne" do modelo).
 **Não inventar números**: se modelo tem 4.2M linhas em fVendas, isso vem do partition info — não inventar tamanho de dados. Se não há info, não citar.
 
 **Não opinar**: a `/pbi-doc` descreve, não julga. Opinião é da `/pbi-modelo-review`.
+
+
+---
+
+## Placeholders do `templates/relatorio.html`
+
+O template HTML usa estes placeholders `{{...}}` que devem ser substituídos com valores reais derivados dos `.tmdl`. Substituir SOMENTE no HTML — nunca dentro de comentários `<!-- -->` (CSS, JS, comentários ficam intocados).
+
+### Placeholders globais
+
+| Placeholder | Conteúdo |
+|---|---|
+| `{{PROJECT_NAME}}` | Nome do projeto (ex: `16 - EV16 - Dashboard Vendas`) |
+| `{{PROJECT_FILENAME}}` | Nome do arquivo `.pbip` |
+| `{{TIMESTAMP}}` | Data de geração (ex: `26 abr 2026`) |
+| `{{PROJECT_TAGLINE}}` | 1 frase descrevendo o propósito do modelo (inferido) |
+| `{{PROJECT_HERO_SUB}}` | Subtítulo do hero (ex: `EV16 Power BI Week · Aula 01 · gerado em 26 abr 2026`) |
+| `{{TABLES_COUNT}}`, `{{MEASURES_COUNT}}`, `{{RELATIONSHIPS_COUNT}}`, `{{COLUMNS_COUNT}}`, `{{SIZE}}` | Métricas inteiras |
+
+### Blocos HTML (gerados pelo Claude com base nos `.tmdl`)
+
+| Placeholder | Conteúdo |
+|---|---|
+| `{{NAV_TABLES_HTML}}` | Sub-nav de tabelas (`<a>` com badges fato/dim/med/aux) |
+| `{{NAV_MEASURES_HTML}}` | Sub-nav de pastas de medidas (`<a>` com counts) |
+| `{{INVENTORY_TABLE_ROWS}}` | Linhas `<tr>` da tabela inventário |
+| `{{DATA_SOURCES_TEXT}}` | Texto descritivo das fontes |
+| `{{WARNINGS_HTML}}` | Callouts.warn pra problemas detectáveis (paths pessoais, etc.) — pode ser vazio |
+| `{{CONFIG_LIST_HTML}}` | Items `<li>` da config-list (culture, compatibility, autoDateTime, etc.) |
+| `{{TABLES_CARDS_HTML}}` | Todos os `<article class="table-card">` da seção 01 |
+| `{{MEASURE_GROUPS_HTML}}` | Todos os `<div class="measure-group">` da seção 02 |
+| `{{REL_SVG_HTML}}` | SVG inline do diagrama de relacionamentos (gerar dinâmico) |
+| `{{REL_TABLE_ROWS}}` | Linhas `<tr>` da tabela de relacionamentos |
+| `{{DEP_TREE_HTML}}` | Árvore de dependências (uma ou mais) |
+| `{{DEP_REVERSE_HTML}}` | Cards reverse das medidas-base |
+| `{{TOP_TABLES_LIST_HTML}}` | Items `<li>` com tabelas mais referenciadas |
+
+### Padrão de cada `<details class="measure-mini">`
+
+Todas as medidas seguem este shape — medidas-âncora têm classe `.anchor` + atributo `open`:
+
+```html
+<details class="measure-mini [anchor]" [open]>
+  <summary>
+    <span class="name">{Nome}</span>
+    <span class="dax">{DAX-essência em 1 linha}</span>
+    <span class="toggle">+</span>
+  </summary>
+  <div class="mini-body">
+    <p class="meta">Tabela: <code>{tabela}</code> · Format: <code>{format}</code></p>
+    <p class="desc"><strong>O que faz:</strong> {explicação business}</p>
+    <pre class="code">{DAX completo com syntax highlight via spans .k .f .s .c}</pre>
+    <div class="label">Como funciona</div>
+    <p class="desc">{explicação técnica}</p>
+    <div class="label">É usada por</div>
+    <p class="measure-deps"><code>{outra-medida-1}</code> · <code>{outra-medida-2}</code></p>
+  </div>
+</details>
+```
+
+### Excluir tabelas auto-date
+
+`LocalDateTable_*` e `DateTableTemplate_*` são auto-geradas pelo Power BI quando Auto Date/Time está ON — **não fazem parte da doc intencional**. Skipar.
