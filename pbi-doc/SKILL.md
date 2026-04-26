@@ -117,12 +117,24 @@ Ler templates em `templates/` e preencher com dados reais. Salvar em `./_docs/` 
 
 ### 3. Gerar HTML standalone
 
-Ler `templates/relatorio.html`, preencher placeholders, salvar em `./_docs/index.html`. Características:
-- **Sidebar fixa esquerda** (250px) com nav: Overview / Tabelas / Medidas / Relacionamentos / Dependências + lista clicável das tabelas/medidas
-- **Topbar** com busca client-side (filtra cards por nome no scroll)
-- **Main content** scrollable com cada seção sequencial
-- **Cards** ricos: tabela com colunas tipadas, medida com DAX colorizado + explicação colapsável
-- **JS vanilla** (~30 linhas): scroll spy + busca
+**🚨 REGRA INVIOLÁVEL — usar templates/relatorio.html LITERAL:**
+
+1. **LER** `templates/relatorio.html` — esse arquivo já tem **todo o CSS, todo o HTML estrutural, todos os tokens DS v4 (Bebas Neue, accent-gold, gold-grid + beams animados, orb-v2 elipses blue/purple, riscas section+section::before, brackets), todo o JS de scroll spy/busca**. CSS são ~600 linhas inline + HTML completo com gold-grid, sidebar, topbar, sections.
+
+2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos valores reais derivados dos `.tmdl`. Os placeholders estão listados no comentário do topo do template. Todos os blocos `{{...}}_HTML` são gerados pelo Claude com base no inventário do modelo.
+
+3. **PROIBIDO:**
+   - ❌ Trocar o CSS por outro
+   - ❌ Inventar nova paleta de cores (usar SÓ os tokens do template: `--accent-gold-bright #E8C9A0`, `--accent-glow #7099FF`, `--neon-magenta #C47FFF`, etc.)
+   - ❌ Mudar fontes (DS v4 usa Bebas Neue + Barlow Condensed + Outfit + JetBrains Mono — nada de Segoe UI, Arial, system-ui)
+   - ❌ Remover o `<div class="gold-grid">`, os `<div class="section-orb">`, ou qualquer ornamento decorativo do template
+   - ❌ Gerar HTML "do zero" porque parece mais fácil — **isso queima toda a identidade visual Xperiun**
+
+4. **SALVAR** em `./_docs/index.html` (modo Code) ou retornar como artifact (modo Web).
+
+5. **Como deve parecer:** fundo `#0D0C0E` quase preto · gold-grid de papel pautado dourado animado caindo · orbs azul/roxo em cada seção · risca dourada entre seções · cards `var(--gradient-surface)` com border `--border-faint` · números em Bebas Neue gold · DAX com syntax highlight via spans `.k .f .s .c`. Estilo "editorial premium dark" — não dashboard genérico tipo Vercel/Stripe.
+
+6. **Sintoma de erro:** se o output tem cores como `#f5a623` (laranja) ou `#7c6af7` (roxo genérico), ou usa `'Segoe UI'`, ou não tem gold-grid no body — você IGNOROU o template. Volta e refaz usando o template literal.
 
 ### 4. Resumir no chat
 

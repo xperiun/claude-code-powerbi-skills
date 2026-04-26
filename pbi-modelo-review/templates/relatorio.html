@@ -282,7 +282,77 @@ body::after {
 .footer-cta:hover { background:rgba(70,104,212,0.2); border-color:var(--accent-glow); transform:translateY(-2px); box-shadow:var(--shadow-glow-sm); }
 .footer-meta { font-family:var(--font-condensed); font-size:11px; color:var(--text-muted); margin-top:32px; letter-spacing:0.25em; text-transform:uppercase; }
 
+/* ═══════════════════════════════════════════════════════════════
+   DS V4 EXTRAS · gold-grid + beams + orb-v2 + risca entre seções
+═══════════════════════════════════════════════════════════════ */
+@keyframes beamFall {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  5%   { opacity: 0.35; }
+  50%  { opacity: 0.9; }
+  95%  { opacity: 0.35; }
+  100% { transform: translateY(120vh); opacity: 0; }
+}
+@keyframes beamFallCenter {
+  0%   { transform: translate(-50%, -100%); opacity: 0; }
+  5%   { opacity: 0.35; }
+  50%  { opacity: 0.9; }
+  95%  { opacity: 0.35; }
+  100% { transform: translate(-50%, 120vh); opacity: 0; }
+}
+.gold-grid {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  display: flex; max-width: 1400px; margin: 0 auto;
+  left: 0; right: 0; opacity: 0.85;
+}
+.gold-grid-col {
+  flex: 1; height: 100%;
+  border-left: 1px solid rgba(232,201,160,0.055);
+  position: relative; overflow: hidden;
+}
+.gold-grid-col:last-child { border-right: 1px solid rgba(232,201,160,0.055); }
+.gold-beam {
+  position: absolute; top: 0; left: -1px; width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(232,201,160,0.5) 50%, transparent 100%);
+  animation-name: beamFall; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+.gold-beam.short  { height: 180px; }
+.gold-beam.medium { height: 260px; }
+.gold-beam.tall   { height: 380px; }
+.gold-beam.center { left: 50%; transform: translateX(-50%); animation-name: beamFallCenter; }
+.gold-beam.strong {
+  background: linear-gradient(180deg, transparent 0%, rgba(232,201,160,0.75) 50%, transparent 100%);
+}
+section, .container > .filters-section, .container > .issues-section, .container > .footer {
+  position: relative;
+}
+.section-orb {
+  position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+  filter: blur(90px); opacity: 0.60;
+}
+.section-orb.blue-tall {
+  background: radial-gradient(ellipse 55% 78% at 38% 42%, #B8D0FF 0%, #6B92FF 6%, #4668D4 15%, #2D3F8A 28%, #1A1346 44%, transparent 62%);
+}
+.section-orb.blue-wide {
+  background: radial-gradient(ellipse 80% 58% at 58% 50%, #B8D0FF 0%, #6B92FF 7%, #4668D4 17%, #2D3F8A 32%, #1A1346 48%, transparent 65%);
+}
+.section-orb.purple-tall {
+  background: radial-gradient(ellipse 55% 78% at 38% 42%, #D4C4FF 0%, #9583FF 6%, #6A5BDB 15%, #3A2E8A 28%, #170E45 44%, transparent 62%);
+}
+.section-orb.blue-hint {
+  background: radial-gradient(ellipse 68% 72% at 52% 48%, #6B92FF 0%, #4668D4 10%, #2D3F8A 22%, #1A1346 40%, transparent 60%);
+  opacity: 0.20;
+}
+.section-orb.purple-hint {
+  background: radial-gradient(ellipse 68% 72% at 52% 48%, #7B6FFF 0%, #4A3EB0 8%, #2A1F6A 20%, #170E45 38%, transparent 58%);
+  opacity: 0.20;
+}
+.container { position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) {
+  .gold-beam { animation: none !important; opacity: 0.15 !important; }
+}
+
 @media print {
+  .gold-grid, .section-orb { display: none !important; }
   body { background:white; color:#1A1A1A; }
   body::before, body::after { display:none; }
   .scorecard, .sev-card, .issue-card, .dist-bar-container { box-shadow:none; background:white !important; border:1px solid #ddd !important; }
@@ -294,6 +364,33 @@ body::after {
 </style>
 </head>
 <body>
+
+<!-- Gold-grid + beams (DS v4 oficial) -->
+<div class="gold-grid" aria-hidden="true">
+  <div class="gold-grid-col"></div>
+  <div class="gold-grid-col">
+    <div class="gold-beam medium" style="animation-duration: 7s; animation-delay: 0s;"></div>
+  </div>
+  <div class="gold-grid-col">
+    <div class="gold-beam tall strong" style="animation-duration: 9s; animation-delay: 3s;"></div>
+  </div>
+  <div class="gold-grid-col">
+    <div class="gold-beam medium center strong" style="animation-duration: 8s; animation-delay: 1.5s;"></div>
+  </div>
+  <div class="gold-grid-col">
+    <div class="gold-beam tall" style="animation-duration: 10s; animation-delay: 2s;"></div>
+  </div>
+  <div class="gold-grid-col">
+    <div class="gold-beam medium" style="animation-duration: 7.5s; animation-delay: 4.5s;"></div>
+  </div>
+  <div class="gold-grid-col"></div>
+</div>
+
+<!-- Orbs ambient (1 grande + 1 hint) -->
+<div class="section-orb blue-tall" style="left:-12%; top:5%; width:780px; height:1000px;" aria-hidden="true"></div>
+<div class="section-orb purple-hint" style="right:-15%; top:40%; width:700px; height:700px;" aria-hidden="true"></div>
+<div class="section-orb purple-wide" style="left:-8%; top:80%; width:1050px; height:700px;" aria-hidden="true"></div>
+<div class="section-orb blue-hint" style="right:-15%; bottom:0%; width:700px; height:700px;" aria-hidden="true"></div>
 
 <div class="container">
 

@@ -135,10 +135,20 @@ Filtrar issues conforme severidade mínima escolhida e gerar **dois arquivos**:
 - Salvar em `./_review/relatorio.md` na raiz do projeto Power BI
 
 **B. HTML standalone** (visual):
-- Ler `templates/relatorio.html`
-- Substituir placeholders pelos dados reais
-- Garantir que CSS continua **inline** (sem dependências externas além das fontes Google)
-- Salvar em `./_review/index.html` na raiz do projeto Power BI
+
+**🚨 REGRA INVIOLÁVEL — usar templates/relatorio.html LITERAL:**
+
+1. **LER** `templates/relatorio.html` — esse arquivo já tem **todo o CSS, todo o HTML estrutural, todos os tokens DS v4 (Bebas Neue, accent-gold, gold-grid + beams animados, orb-v2 elipses blue/purple, brackets), todo o JS de filtro de severidade**.
+2. **SUBSTITUIR APENAS os placeholders `{{...}}`** pelos dados de auditoria reais.
+3. **PROIBIDO:**
+   - ❌ Trocar o CSS por outro
+   - ❌ Inventar nova paleta (usar SÓ tokens do template: `--accent-gold-bright #E8C9A0`, `--accent-glow #7099FF`, `--neon-magenta #C47FFF`)
+   - ❌ Mudar fontes (DS v4 = Bebas Neue + Barlow Condensed + Outfit + JetBrains Mono — nada de Segoe UI)
+   - ❌ Remover `<div class="gold-grid">`, `<div class="section-orb">`, ou ornamentos do template
+   - ❌ Gerar HTML "do zero" porque parece mais fácil — **isso queima toda a identidade visual Xperiun**
+4. **Garantir que CSS continua inline** (sem dependências externas além das fontes Google).
+5. **SALVAR** em `./_review/index.html` (modo Code) ou retornar como artifact (modo Web).
+6. **Sintoma de erro:** se output tem `#f5a623` (laranja) ou `#7c6af7` (roxo genérico), ou usa `'Segoe UI'`, ou não tem gold-grid no body — você IGNOROU o template. Volta e refaz usando o template literal.
 
 ### 6. Resumir no chat
 
