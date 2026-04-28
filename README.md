@@ -54,63 +54,17 @@ Esse repo automatiza as 3 — e roda **direto no Claude.ai grátis**.
 
 ---
 
-## Instalação rápida (Claude.ai · Free funciona)
+## Downloads
 
-> **Tempo total**: 2 minutos por skill.
-
-### 1. Baixa o `.zip` da skill que você quer usar
-
-| Skill | Download |
+| Skill | `.zip` |
 |---|---|
-| 🩺 Auditar modelo | [`pbi-modelo-review.zip`](releases/pbi-modelo-review.zip) |
-| 📚 Documentar modelo | [`pbi-doc.zip`](releases/pbi-doc.zip) |
-| ⚡ Criar medida DAX | [`pbi-dax-create.zip`](releases/pbi-dax-create.zip) |
+| 🩺 Auditar modelo | [`pbi-modelo-review.zip`](claude-web/pbi-modelo-review.zip) |
+| 📚 Documentar modelo | [`pbi-doc.zip`](claude-web/pbi-doc.zip) |
+| ⚡ Criar medida DAX | [`pbi-dax-create.zip`](claude-web/pbi-dax-create.zip) |
 
-### 2. Sobe no claude.ai
+**Setup 2 minutos · 3 caminhos (Web · Desktop · Code):** ver [INSTALL.md](INSTALL.md).
 
-- Abre **claude.ai** (qualquer plano · Free funciona)
-- Vai em **Personalizar → Habilidades** (sidebar esquerda)
-- Clica **+ Criar habilidade → Fazer upload de uma habilidade**
-- Arrasta o `.zip` que você baixou
-
-Pronto. A skill aparece em "Habilidades pessoais" e fica disponível em qualquer conversa.
-
-### 3. Usa
-
-Abre uma conversa nova e escreve, por exemplo:
-
-```
-audita esse modelo aqui
-```
-
-ou
-
-```
-documenta esse modelo
-```
-
-ou
-
-```
-cria uma medida pra calcular o ticket médio
-```
-
-A skill vai pedir os arquivos `.tmdl` do seu projeto Power BI. Você anexa (arrastando ou via botão de anexo) e a skill processa.
-
----
-
-## Pré-requisitos do seu lado
-
-- **Conta Claude** (Free serve · Pro tem limites maiores)
-- **Power BI Desktop** com seu projeto salvo como **PBIP**
-
-### Como salvar como PBIP (1 vez só)
-
-1. Abre seu `.pbix` no Power BI Desktop
-2. `File → Save as → Power BI Project (.pbip)`
-3. Vira uma **pasta** com `SemanticModel/` dentro
-
-A skill lê os `.tmdl` dessa pasta `SemanticModel/`. Tudo texto, tudo seguro, tudo local — nada vai pra rede além do que você anexa no Claude.
+**Pré-requisito:** seu projeto Power BI salvo como **PBIP** (não `.pbix`). [Como converter em 30s](INSTALL.md#antes-de-começar--pré-requisitos).
 
 ---
 
@@ -130,22 +84,19 @@ Esse repo segue **PBIP + Claude Skills** (oficial Anthropic):
 
 ---
 
-## Modos de uso
+## Onde rodar — 3 ambientes Claude
 
-Cada skill **detecta automaticamente** onde tá rodando e adapta:
+Cada skill **detecta automaticamente** onde tá rodando e adapta. Escolhe um:
 
-### Modo Web (Claude.ai · Desktop · grátis)
-- Você anexa os `.tmdl` no chat (individual ou ZIP)
-- Skill devolve **HTML como artifact** (renderiza inline + botão de download) e **markdown como bloco copiável**
-- Não persiste — cada conversa nova requer novo upload
-- **Funciona com Claude Free**
+| Ambiente | Pra quem | Plano | Anexar arquivos? | Output |
+|---|---|---|---|---|
+| **Claude.ai (web)** ⭐ | Default · você sem nada instalado · começar agora | Free serve | A cada conversa (drag-drop) | Artifact HTML inline + download |
+| **Claude Desktop** | Já usa o app nativo Mac/Windows | Free serve · Pro recomendado | A cada conversa (drag-drop) | Igual Web · janela dedicada · atalho de teclado |
+| **Claude Code** | Dev/analista com Git · workflow contínuo · uso intenso | Pro+ na prática | **Lê sozinha** do disco | Salva direto em `_review/`, `_docs/` no projeto · edita `.tmdl` (com aprovação) |
 
-### Modo Code (Claude Code CLI/IDE)
-- Skill lê automaticamente a pasta `.SemanticModel/` do diretório atual
-- Salva output em `_review/`, `_docs/` na raiz do projeto Power BI
-- Edita `.tmdl` direto se você autorizar
-- Precisa **Claude Pro ou superior** (Free estoura limite rápido)
-- Recomendado pra uso intenso e workflow Git
+⭐ = recomendado se você não tem certeza.
+
+**Como instalar em cada um · passo a passo completo:** [INSTALL.md](INSTALL.md).
 
 ---
 
@@ -202,14 +153,14 @@ pbi-modelo-review/
 
 Cada skill é **self-contained** — não depende das outras. Pode instalar só uma se quiser.
 
-Pra usuários do **Claude Code**, o repo também tem `.claude/skills/` com as 3 skills configuradas pra uso direto:
+Pra usuários do **Claude Code**, o repo também tem `claude-code/` com as 3 skills configuradas pra uso direto:
 
 ```bash
 # Modo global (todos os projetos)
-cp -r .claude/skills/* ~/.claude/skills/
+cp -r claude-code/* ~/.claude/skills/
 
 # Modo por projeto
-cp -r .claude/skills/* /seu-projeto-pbip/.claude/skills/
+cp -r claude-code/* /seu-projeto-pbip/.claude/skills/
 ```
 
 ---

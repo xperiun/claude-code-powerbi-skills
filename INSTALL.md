@@ -31,7 +31,7 @@ A skill vai ler os `.tmdl` que estão dentro de `SemanticModel/definition/`. Tud
 
 ### Passo 1 · Baixa o `.zip`
 
-Vai na pasta [`releases/`](releases/) do repo e baixa o `.zip` da skill que você quer instalar:
+Vai na pasta [`claude-web/`](../claude-web/) do repo e baixa o `.zip` da skill que você quer instalar:
 
 | Skill | Arquivo |
 |---|---|
@@ -86,7 +86,7 @@ Da pasta do seu projeto PBIP, vai em `SemanticModel/definition/` e anexa:
 
 ### Passo 1 · Baixa o `.zip`
 
-Igual Caminho 1 — pega da pasta `releases/`.
+Igual Caminho 1 — pega da pasta `claude-web/`.
 
 ### Passo 2 · Sobe no Claude Desktop
 
@@ -130,20 +130,20 @@ cd claude-code-powerbi-skills
 
 ```bash
 # Mac/Linux
-cp -r .claude/skills/* ~/.claude/skills/
+cp -r claude-code/* ~/.claude/skills/
 
 # Windows (PowerShell)
-Copy-Item -Recurse .claude/skills/* $env:USERPROFILE\.claude\skills\
+Copy-Item -Recurse claude-code/* $env:USERPROFILE\.claude\skills\
 ```
 
 **Modo por projeto** (só nesse projeto Power BI específico):
 
 ```bash
 # Mac/Linux
-cp -r .claude/skills/* /caminho/pro/seu-projeto-pbip/.claude/skills/
+cp -r claude-code/* /caminho/pro/seu-projeto-pbip/.claude/skills/
 
 # Windows (PowerShell)
-Copy-Item -Recurse .claude/skills/* C:\caminho\pro\seu-projeto-pbip\.claude\skills\
+Copy-Item -Recurse claude-code/* C:\caminho\pro\seu-projeto-pbip\.claude\skills\
 ```
 
 ### Passo 3 · Usa
@@ -202,7 +202,7 @@ A skill detecta a pasta `SemanticModel/` automaticamente, lê os `.tmdl` sozinha
 ```bash
 cd claude-code-powerbi-skills
 git pull
-cp -r .claude/skills/* ~/.claude/skills/   # sobrescreve
+cp -r claude-code/* ~/.claude/skills/   # sobrescreve
 ```
 
 ---
