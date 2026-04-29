@@ -263,8 +263,99 @@ section, .container > .filters-section, .container > .issues-section, .container
   opacity: 0.20;
 }
 .container { position: relative; z-index: 2; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMAÇÕES · entrada hero · scroll reveal · ambient breathing · count-up · score gauge
+═══════════════════════════════════════════════════════════════ */
+
+/* Ambient breathing — orb radial pulsa sutilmente (12s) */
+@keyframes ambientBreathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.86; }
+}
+body::before { animation: ambientBreathe 12s ease-in-out infinite; }
+body::after  { animation: ambientBreathe 16s ease-in-out infinite reverse; }
+
+/* Hero entrance · cascade fade+lift+blur-out */
+@keyframes heroFade {
+  from { opacity: 0; transform: translateY(28px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+.anim-hero { opacity: 0; animation: heroFade 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.anim-d1 { animation-delay: 0.10s; }
+.anim-d2 { animation-delay: 0.28s; }
+.anim-d3 { animation-delay: 0.46s; }
+.anim-d4 { animation-delay: 0.64s; }
+.anim-d5 { animation-delay: 0.82s; }
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0; transform: translateY(28px); filter: blur(4px);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.85s ease;
+  will-change: opacity, transform, filter;
+}
+.reveal.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+.reveal.r-d1 { transition-delay: 0.08s; }
+.reveal.r-d2 { transition-delay: 0.16s; }
+.reveal.r-d3 { transition-delay: 0.24s; }
+.reveal.r-d4 { transition-delay: 0.32s; }
+
+/* Count-up · pulse glow ao terminar (gold) */
+@keyframes numPulse {
+  0%   { filter: drop-shadow(0 0 0 rgba(232,201,160,0)); }
+  35%  { filter: drop-shadow(0 0 36px rgba(232,201,160,0.55)); }
+  100% { filter: drop-shadow(0 0 14px rgba(232,201,160,0.20)); }
+}
+.num-pulse { animation: numPulse 1.4s ease-out forwards; }
+
+/* Particle field */
+@keyframes particleFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.55; }
+  90%  { opacity: 0.55; }
+  100% { transform: translateY(-110vh) translateX(var(--dx, 30px)); opacity: 0; }
+}
+.particle-field { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.particle {
+  position: absolute; width: 2px; height: 2px; border-radius: 50%;
+  background: var(--accent-gold-bright);
+  box-shadow: 0 0 6px var(--accent-gold-bright);
+  bottom: -8px;
+  animation: particleFloat linear infinite;
+  opacity: 0;
+}
+.particle.blue {
+  background: var(--accent-glow);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Score gauge SVG · ring que preenche até o score */
+.score-circle { position: relative; }
+.score-gauge-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: clamp(220px, 24vw, 360px);
+  height: clamp(220px, 24vw, 360px);
+  transform: translate(-50%, calc(-50% - 12px));
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 0 24px rgba(232,201,160,0.25));
+}
+.score-gauge-svg .gauge-ring {
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+}
+.score-circle .score-num,
+.score-circle .score-label { position: relative; z-index: 2; }
+
 @media (prefers-reduced-motion: reduce) {
   .gold-beam { animation: none !important; opacity: 0.15 !important; }
+  body::before, body::after { animation: none !important; }
+  .anim-hero { animation: none !important; opacity: 1 !important; }
+  .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
+  .particle-field { display: none !important; }
+  .score-gauge-svg .gauge-ring { transition: none !important; }
 }
 
 @media print {
@@ -302,6 +393,9 @@ section, .container > .filters-section, .container > .issues-section, .container
   <div class="gold-grid-col"></div>
 </div>
 
+<!-- Particle field (gerado via JS) -->
+<div class="particle-field" aria-hidden="true"></div>
+
 <!-- Orbs ambient (1 grande + 1 hint) -->
 <div class="section-orb blue-tall" style="left:-12%; top:5%; width:780px; height:1000px;" aria-hidden="true"></div>
 <div class="section-orb purple-hint" style="right:-15%; top:40%; width:700px; height:700px;" aria-hidden="true"></div>
@@ -319,10 +413,10 @@ section, .container > .filters-section, .container > .issues-section, .container
   </div>
 
   <div class="hero">
-    <p class="hero-eyebrow">Auditoria de modelo Power BI</p>
-    <h1 class="hero-headline">{{PROJECT_NAME}}</h1>
-    <p class="hero-subline">{{TABLES_COUNT}} tabelas · {{MEASURES_COUNT}} medidas · {{RELATIONSHIPS_COUNT}} relacionamentos · {{SIZE}}</p>
-    <div class="hero-meta">Gerado por Claude Code em {{GENERATION_TIME}}</div>
+    <p class="hero-eyebrow anim-hero anim-d1">Auditoria de modelo Power BI</p>
+    <h1 class="hero-headline anim-hero anim-d2">{{PROJECT_NAME}}</h1>
+    <p class="hero-subline anim-hero anim-d3">{{TABLES_COUNT}} tabelas · {{MEASURES_COUNT}} medidas · {{RELATIONSHIPS_COUNT}} relacionamentos · {{SIZE}}</p>
+    <div class="hero-meta anim-hero anim-d4">Gerado por Claude Code em {{GENERATION_TIME}}</div>
 
     <div class="scorecard">
       <div class="score-circle">
@@ -417,6 +511,7 @@ section, .container > .filters-section, .container > .issues-section, .container
 
 <script>
 (function(){
+  // ── Filter de issues ──
   const btns = document.querySelectorAll('.filter-btn');
   const cards = document.querySelectorAll('.issue-card');
 
@@ -443,6 +538,149 @@ section, .container > .filters-section, .container > .issues-section, .container
       applyFilter(btn.dataset.filter);
     });
   });
+
+  // ── Particle field · pontos dourado/azul flutuando ──
+  (function initParticles(){
+    const field = document.querySelector('.particle-field');
+    if (!field) return;
+    const N = 32;
+    for (let i = 0; i < N; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle' + (Math.random() < 0.4 ? ' blue' : '');
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+      p.style.animationDuration = (12 + Math.random() * 16) + 's';
+      p.style.animationDelay = (Math.random() * 18) + 's';
+      p.style.opacity = (0.35 + Math.random() * 0.4).toFixed(2);
+      field.appendChild(p);
+    }
+  })();
+
+  // ── Reveal-on-scroll ──
+  function initReveal(targets){
+    const els = [];
+    targets.forEach(({ sel, stagger }) => {
+      document.querySelectorAll(sel).forEach((el, i) => {
+        el.classList.add('reveal');
+        if (stagger) el.classList.add('r-d' + ((i % 4) + 1));
+        els.push(el);
+      });
+    });
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    els.forEach(el => io.observe(el));
+  }
+  initReveal([
+    { sel: '.scorecard' },
+    { sel: '.section-title' },
+    { sel: '.section-desc' },
+    { sel: '.sev-card', stagger: true },
+    { sel: '.dist-bar-container' },
+    { sel: '.filters' },
+    { sel: '.issue-card', stagger: true },
+    { sel: '.footer' }
+  ]);
+
+  // ── Count-up nos números (skip pulse em sev-num pra preservar cor severity) ──
+  function tryCountUp(el){
+    const node = el.firstChild;
+    const txt = ((node && node.nodeType === 3 ? node.nodeValue : el.textContent) || '').trim();
+    const m = txt.match(/^(\d+(?:[.,]\d+)?)(.*)$/);
+    if (!m) return;
+    const numStr = m[1].replace(',', '.');
+    const target = parseFloat(numStr);
+    if (isNaN(target) || target === 0) return;
+    const suffix = m[2] || '';
+    const decimals = (numStr.split('.')[1] || '').length;
+    const duration = 1500;
+    const start = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    const skipPulse = el.classList.contains('sev-num');
+    const setVal = (s) => {
+      if (node && node.nodeType === 3) node.nodeValue = s;
+      else el.textContent = s;
+    };
+    setVal('0' + (decimals ? '.' + '0'.repeat(decimals) : '') + suffix);
+    function tick(now){
+      const t = Math.min(1, (now - start) / duration);
+      const v = ease(t) * target;
+      setVal((decimals ? v.toFixed(decimals) : Math.round(v)) + suffix);
+      if (t < 1) requestAnimationFrame(tick);
+      else if (!skipPulse) el.classList.add('num-pulse');
+    }
+    requestAnimationFrame(tick);
+  }
+  function initCountUps(selector){
+    const els = document.querySelectorAll(selector);
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(tryCountUp);
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          tryCountUp(e.target);
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    els.forEach(el => io.observe(el));
+  }
+  initCountUps('.score-num, .stat-num, .sev-num, .leg-num');
+
+  // ── Score gauge SVG · ring que enche girando até o score ──
+  (function scoreGauge(){
+    const sc = document.querySelector('.score-circle');
+    if (!sc) return;
+    const numEl = sc.querySelector('.score-num');
+    const txt = (numEl && numEl.firstChild ? (numEl.firstChild.nodeValue || '') : '').trim();
+    const score = parseInt(txt, 10);
+    if (isNaN(score)) return;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 220 220');
+    svg.setAttribute('class', 'score-gauge-svg');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML =
+      '<defs>' +
+        '<linearGradient id="gauge-grad" x1="0" y1="0" x2="1" y2="1">' +
+          '<stop offset="0%" stop-color="#F0DFC0" />' +
+          '<stop offset="55%" stop-color="#D4B896" />' +
+          '<stop offset="100%" stop-color="#B8955A" />' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<circle cx="110" cy="110" r="98" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none" />' +
+      '<circle cx="110" cy="110" r="98" stroke="url(#gauge-grad)" stroke-width="3" fill="none" ' +
+        'stroke-linecap="round" transform="rotate(-90 110 110)" ' +
+        'stroke-dasharray="616" stroke-dashoffset="616" class="gauge-ring" />';
+    sc.insertBefore(svg, sc.firstChild);
+    const ring = svg.querySelector('.gauge-ring');
+    const C = 2 * Math.PI * 98;
+    const target = C * (1 - Math.max(0, Math.min(100, score)) / 100);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            requestAnimationFrame(() => { ring.style.strokeDashoffset = target; });
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.4 });
+      io.observe(sc);
+    } else {
+      ring.style.strokeDashoffset = target;
+    }
+  })();
 })();
 </script>
 

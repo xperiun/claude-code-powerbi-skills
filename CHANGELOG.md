@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-29
+
+- Sync de `pbi-doc`, `pbi-modelo-review`, `pbi-dax-create` com a versão local do xperiun-os.
+
+
 Todas as mudanças notáveis nesse repo. Segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---

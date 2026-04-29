@@ -481,8 +481,90 @@ section + section::before {
 /* Garante main-inner acima do gold-grid e orbs */
 .main-inner { position: relative; z-index: 2; }
 
+/* ═══════════════════════════════════════════════════════════════
+   ANIMAÇÕES · entrada hero · scroll reveal · ambient breathing · count-up · liquid sidebar
+═══════════════════════════════════════════════════════════════ */
+
+/* Ambient breathing — orb radial pulsa sutilmente (12s) */
+@keyframes ambientBreathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.86; }
+}
+body::before { animation: ambientBreathe 12s ease-in-out infinite; }
+
+/* Hero entrance · cascade fade+lift+blur-out */
+@keyframes heroFade {
+  from { opacity: 0; transform: translateY(28px); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+.anim-hero { opacity: 0; animation: heroFade 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.anim-d1 { animation-delay: 0.10s; }
+.anim-d2 { animation-delay: 0.28s; }
+.anim-d3 { animation-delay: 0.46s; }
+.anim-d4 { animation-delay: 0.64s; }
+
+/* Scroll reveal — IntersectionObserver liga .is-visible */
+.reveal {
+  opacity: 0; transform: translateY(28px); filter: blur(4px);
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.85s ease;
+  will-change: opacity, transform, filter;
+}
+.reveal.is-visible { opacity: 1; transform: translateY(0); filter: blur(0); }
+.reveal.r-d1 { transition-delay: 0.08s; }
+.reveal.r-d2 { transition-delay: 0.16s; }
+.reveal.r-d3 { transition-delay: 0.24s; }
+.reveal.r-d4 { transition-delay: 0.32s; }
+
+/* Count-up · pulse glow ao terminar */
+@keyframes numPulse {
+  0%   { filter: drop-shadow(0 0 0 rgba(232,201,160,0)); }
+  35%  { filter: drop-shadow(0 0 36px rgba(232,201,160,0.55)); }
+  100% { filter: drop-shadow(0 0 14px rgba(232,201,160,0.20)); }
+}
+.num-pulse { animation: numPulse 1.4s ease-out forwards; }
+
+/* Particle field · pontos dourado/azul flutuando atrás */
+@keyframes particleFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.55; }
+  90%  { opacity: 0.55; }
+  100% { transform: translateY(-110vh) translateX(var(--dx, 30px)); opacity: 0; }
+}
+.particle-field { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.particle {
+  position: absolute; width: 2px; height: 2px; border-radius: 50%;
+  background: var(--accent-gold-bright);
+  box-shadow: 0 0 6px var(--accent-gold-bright);
+  bottom: -8px;
+  animation: particleFloat linear infinite;
+  opacity: 0;
+}
+.particle.blue {
+  background: var(--accent-glow);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Liquid sidebar indicator · pílula que desliza entre items ativos */
+.nav-liquid {
+  position: absolute; left: 0; width: 2px;
+  background: var(--accent-glow);
+  box-shadow: 0 0 12px var(--accent-glow);
+  border-radius: 2px;
+  transition: top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none; opacity: 0;
+}
+.nav-liquid.is-active { opacity: 1; }
+.sidebar.has-liquid .nav-link.active { border-left-color: transparent; }
+
 @media (prefers-reduced-motion: reduce) {
   .gold-beam { animation: none !important; opacity: 0.15 !important; }
+  body::before { animation: none !important; }
+  .anim-hero { animation: none !important; opacity: 1 !important; }
+  .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
+  .particle-field { display: none !important; }
 }
 
 /* ── Mobile ── */
@@ -533,6 +615,9 @@ section + section::before {
   <div class="gold-grid-col"></div>
 </div>
 
+<!-- Particle field (gerado via JS) -->
+<div class="particle-field" aria-hidden="true"></div>
+
 <!-- Topbar -->
 <div class="topbar">
   <div class="project-name">{{PROJECT_FILENAME}}</div>
@@ -582,10 +667,10 @@ section + section::before {
 
   <!-- Hero -->
   <div class="hero-block">
-    <p class="hero-eyebrow">Documentação Power BI</p>
-    <h1 class="hero-title">{{PROJECT_NAME}}</h1>
-    <p class="hero-sub">{{PROJECT_HERO_SUB}}</p>
-    <p class="hero-tagline">{{PROJECT_TAGLINE}}</p>
+    <p class="hero-eyebrow anim-hero anim-d1">Documentação Power BI</p>
+    <h1 class="hero-title anim-hero anim-d2">{{PROJECT_NAME}}</h1>
+    <p class="hero-sub anim-hero anim-d3">{{PROJECT_HERO_SUB}}</p>
+    <p class="hero-tagline anim-hero anim-d4">{{PROJECT_TAGLINE}}</p>
   </div>
 
   <!-- Overview -->
@@ -710,14 +795,14 @@ section + section::before {
 
 <script>
 (function(){
-  // Sidebar mobile toggle
+  // ── Sidebar mobile toggle ──
   const menuBtn = document.getElementById('menu-toggle');
   const sidebar = document.getElementById('sidebar');
   if (menuBtn && sidebar) {
     menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
   }
 
-  // Scroll spy
+  // ── Scroll spy ──
   const navLinks = document.querySelectorAll('.sidebar .nav-link');
   const sections = Array.from(navLinks).map(link => {
     const id = link.getAttribute('href').slice(1);
@@ -736,7 +821,7 @@ section + section::before {
   window.addEventListener('scroll', updateActive, { passive: true });
   updateActive();
 
-  // Search (filtra cards por nome)
+  // ── Search (filtra cards por nome) ──
   const search = document.getElementById('search');
   const tableCards = document.querySelectorAll('.table-card');
   const measureCards = document.querySelectorAll('.measure-card, .measure-mini');
@@ -747,6 +832,134 @@ section + section::before {
       card.style.display = (q === '' || text.includes(q)) ? '' : 'none';
     });
   });
+
+  // ── Particle field · pontos dourado/azul flutuando ──
+  (function initParticles(){
+    const field = document.querySelector('.particle-field');
+    if (!field) return;
+    const N = 28;
+    for (let i = 0; i < N; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle' + (Math.random() < 0.4 ? ' blue' : '');
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+      p.style.animationDuration = (12 + Math.random() * 16) + 's';
+      p.style.animationDelay = (Math.random() * 18) + 's';
+      p.style.opacity = (0.35 + Math.random() * 0.4).toFixed(2);
+      field.appendChild(p);
+    }
+  })();
+
+  // ── Reveal-on-scroll ──
+  function initReveal(targets){
+    const els = [];
+    targets.forEach(({ sel, stagger }) => {
+      document.querySelectorAll(sel).forEach((el, i) => {
+        el.classList.add('reveal');
+        if (stagger) el.classList.add('r-d' + ((i % 4) + 1));
+        els.push(el);
+      });
+    });
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    els.forEach(el => io.observe(el));
+  }
+  initReveal([
+    { sel: '.metric-card', stagger: true },
+    { sel: '.section-title' },
+    { sel: '.section-desc' },
+    { sel: '.inv-table' },
+    { sel: '.callout' },
+    { sel: '.config-list' },
+    { sel: '.table-card', stagger: true },
+    { sel: '.measure-group' },
+    { sel: '.measure-card', stagger: true },
+    { sel: '.measure-mini', stagger: true },
+    { sel: '.rel-svg' },
+    { sel: '.rel-table' },
+    { sel: '.dep-tree' },
+    { sel: '.dep-reverse-card', stagger: true },
+    { sel: '.footer' }
+  ]);
+
+  // ── Count-up nos números ──
+  function tryCountUp(el){
+    const node = el.firstChild;
+    const txt = ((node && node.nodeType === 3 ? node.nodeValue : el.textContent) || '').trim();
+    const m = txt.match(/^(\d+(?:[.,]\d+)?)(.*)$/);
+    if (!m) return;
+    const numStr = m[1].replace(',', '.');
+    const target = parseFloat(numStr);
+    if (isNaN(target) || target === 0) return;
+    const suffix = m[2] || '';
+    const decimals = (numStr.split('.')[1] || '').length;
+    const duration = 1500;
+    const start = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    const setVal = (s) => {
+      if (node && node.nodeType === 3) node.nodeValue = s;
+      else el.textContent = s;
+    };
+    setVal('0' + (decimals ? '.' + '0'.repeat(decimals) : '') + suffix);
+    function tick(now){
+      const t = Math.min(1, (now - start) / duration);
+      const v = ease(t) * target;
+      setVal((decimals ? v.toFixed(decimals) : Math.round(v)) + suffix);
+      if (t < 1) requestAnimationFrame(tick);
+      else el.classList.add('num-pulse');
+    }
+    requestAnimationFrame(tick);
+  }
+  function initCountUps(selector){
+    const els = document.querySelectorAll(selector);
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(tryCountUp);
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          tryCountUp(e.target);
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    els.forEach(el => io.observe(el));
+  }
+  initCountUps('.metric-num');
+
+  // ── Liquid sidebar indicator · pílula segue .nav-link.active ──
+  (function liquidSidebar(){
+    if (!sidebar) return;
+    const pill = document.createElement('div');
+    pill.className = 'nav-liquid';
+    sidebar.appendChild(pill);
+    sidebar.classList.add('has-liquid');
+    function moveTo(link){
+      if (!link) { pill.classList.remove('is-active'); return; }
+      const r = link.getBoundingClientRect();
+      const sr = sidebar.getBoundingClientRect();
+      pill.style.top = (r.top - sr.top + sidebar.scrollTop + 6) + 'px';
+      pill.style.height = (r.height - 12) + 'px';
+      pill.classList.add('is-active');
+    }
+    const mo = new MutationObserver(() => moveTo(sidebar.querySelector('.nav-link.active')));
+    sidebar.querySelectorAll('.nav-link').forEach(l => {
+      mo.observe(l, { attributes: true, attributeFilter: ['class'] });
+    });
+    moveTo(sidebar.querySelector('.nav-link.active'));
+    window.addEventListener('resize', () => moveTo(sidebar.querySelector('.nav-link.active')));
+  })();
 })();
 </script>
 

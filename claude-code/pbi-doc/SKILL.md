@@ -5,6 +5,8 @@ description: Documenta projeto Power BI (PBIP) inteiro em markdown estruturado +
 
 # /pbi-doc — Documentação automática de Power BI
 
+> **📦 Distribuída publicamente:** [github.com/xperiun/claude-code-powerbi-skills](https://github.com/xperiun/claude-code-powerbi-skills) — pasta `claude-code/pbi-doc/` (skill nativa) + `claude-web/pbi-doc.zip` (upload no Claude.ai). Mudança aqui exige sincronizar lá: atualizar pasta + regenerar ZIP (Python `zipfile`, ver CLAUDE.md) + commit + bump CHANGELOG. Repo é open-source, leiame público — evitar referências internas (Xperiun-only) na SKILL.md.
+
 Gera documentação completa de um projeto Power BI (formato PBIP) em duas formas:
 - **Markdown** versionável Git (5 arquivos: overview, tabelas, medidas, relacionamentos, dependências)
 - **HTML standalone** navegável (mini-site com sidebar fixa, busca, syntax highlight em DAX)
